@@ -418,7 +418,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Sidebar with CSS Transition */}
       <div className={`md:hidden fixed inset-0 z-[100] flex pointer-events-none ${mobileMenuOpen ? 'pointer-events-auto' : ''}`}>
         <div
-          className={`w-[280px] max-w-[85vw] h-full bg-[--bg-primary] shadow-2xl transition-transform duration-300 ease-in-out overflow-hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`w-[280px] max-w-[85vw] h-full bg-[--bg-primary] shadow-2xl transition-transform duration-300 ease-in-out overflow-y-auto ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
           <SidebarContent />
         </div>

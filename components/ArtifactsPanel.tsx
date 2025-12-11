@@ -205,8 +205,8 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
     }
 
     const containerClasses = isFullscreen
-        ? 'fixed inset-0 z-50'
-        : 'artifacts-panel open fixed right-0 top-14 w-[400px] h-[calc(100vh-56px)] border-l border-[--border-primary] z-100';
+        ? 'fixed inset-0 z-[200]'
+        : 'artifacts-panel open fixed right-0 top-14 w-full sm:w-[400px] h-[calc(100vh-56px)] border-l border-[--border-primary] z-[150]';
 
     return (
         <div className={`${containerClasses} bg-[--bg-secondary] flex flex-col`}>
