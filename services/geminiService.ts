@@ -132,6 +132,13 @@ export const streamChatResponse = async (
   const tryPollinationsDirect = async (message: string): Promise<boolean> => {
     console.log('[WILI] Attempting Direct Pollinations API (Client-Side)...');
 
+    // 0. Check for Attachments (Image Analysis Limitation)
+    if (attachments && attachments.length > 0) {
+      onChunk("⚠️ **Batasan Sistem Cloud (Vercel)**\n\nMaaf, analisis gambar/file saat ini hanya tersedia jika Anda menjalankan bot di komputer sendiri (Localhost) atau menggunakan API Key Gemini pribadi. Mode Cloud Gratis (Pollinations) belum mendukung input gambar.\n\nSilakan lanjutkan percakapan teks biasa. 😊");
+      onComplete({ inputTokens: 0, outputTokens: 50, latencyMs: 0, totalCost: "Free" }, undefined);
+      return true;
+    }
+
     // 1. Client-Side Search (DuckDuckGo) for Vercel
     let searchContext = '';
     const isQuestion = /\b(cari|search|info|berita|news|apa|siapa|kapan|dimana)\b/i.test(message);
