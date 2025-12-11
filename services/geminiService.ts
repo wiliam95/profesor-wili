@@ -152,21 +152,38 @@ export const streamChatResponse = async (
         // Try Primary Proxy (corsproxy.io)
         let ddr = null;
         try {
-          ddr = await fetch(`https://corsproxy.io/?` + encodeURIComponent(ddgUrl)).then(r => r.json());
+          const res = await fetch(`https://corsproxy.io/?` + encodeURIComponent(ddgUrl));
+          if (res.ok) ddr = await res.json();
         } catch (e1) {
           console.log('Primary Proxy Failed, trying backup...');
-          // Backup Proxy (allorigins)
-          const backup = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(ddgUrl)}`).then(r => r.json());
-          if (backup.contents) ddr = JSON.parse(backup.contents);
         }
 
-        if (ddr && (ddr.Abstract || (ddr.RelatedTopics && ddr.RelatedTopics.length))) {
+        // Fallback: Wikipedia API (Guaranteed CORS Support)
+        if (!ddr) {
+          console.log('Switching to Wikipedia Search (CORS Supported)...');
+          try {
+            const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*`;
+            const wikiRes = await fetch(wikiUrl).then(r => r.json());
+            if (wikiRes.query?.search) {
+              ddr = { IsWiki: true, Results: wikiRes.query.search };
+            }
+          } catch (e2) { console.log('Wikipedia failed', e2); }
+        }
+
+        if (ddr) {
           searchContext = `[SYSTEM: REAL-TIME WEB SEARCH RESULTS]\n`;
-          if (ddr.Abstract) searchContext += `- ${ddr.Abstract}\n`;
-          if (ddr.RelatedTopics) {
-            ddr.RelatedTopics.slice(0, 4).forEach((t: any) => {
-              if (t.Text && t.FirstURL) searchContext += `- ${t.Text} (${t.FirstURL})\n`;
+
+          if (ddr.IsWiki) {
+            ddr.Results.slice(0, 3).forEach((r: any) => {
+              searchContext += `- ${r.title}: ${r.snippet.replace(/<[^>]*>/g, '')}\n`;
             });
+          } else {
+            if (ddr.Abstract) searchContext += `- ${ddr.Abstract}\n`;
+            if (ddr.RelatedTopics) {
+              ddr.RelatedTopics.slice(0, 4).forEach((t: any) => {
+                if (t.Text && t.FirstURL) searchContext += `- ${t.Text} (${t.FirstURL})\n`;
+              });
+            }
           }
           searchContext += `\n[INSTRUCTION: Use the above real-time information to answer the user's question. Ignore your knowledge cutoff date.]\n\n`;
         }

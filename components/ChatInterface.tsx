@@ -148,13 +148,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }
 
-      // Android Fix V2: Strict Dedup
+      // Android Fix V3: Time-based Debounce + Strict Dedup
+      const now = Date.now();
+      if ((window as any)._lastVoiceTime && (now - (window as any)._lastVoiceTime < 500)) {
+        return; // Skip if too fast (duplicate event)
+      }
+      (window as any)._lastVoiceTime = now;
+
       const cleanFinal = finalTranscript.trim();
       const currentFull = textBeforeRef.current.trim();
 
       if (cleanFinal && !currentFull.endsWith(cleanFinal)) {
-        // Double check overlap to avoid "Hello Hello world" -> "Hello world"
-        // If the new phrase is NOT just a repetition of the last few words
         textBeforeRef.current += (textBeforeRef.current ? ' ' : '') + cleanFinal;
       }
 
@@ -200,9 +204,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </h1>
         </div>
         <div className="flex items-center gap-4">
-          <div className="model-display flex items-center gap-2 px-3 py-2 bg-[--bg-tertiary] border border-[--border-primary] rounded-md text-sm text-[--text-secondary]">
-            🤖 AI (Free Unlimited - 100% Private)
-          </div>
+          {/* Badge Removed per user request */}
           <div className="header-actions flex gap-2">
             <button className="header-btn w-9 h-9 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors">
               <Share size={20} />
