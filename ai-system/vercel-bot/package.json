@@ -1,0 +1,22 @@
+{
+    "name": "multi-provider-ai-service",
+    "version": "2.0.0",
+    "description": "Multi-provider AI service with Gemini, Groq, OpenRouter, HuggingFace fallback",
+    "main": "ai-service.js",
+    "type": "module",
+    "scripts": {
+        "test": "node test-all-providers.js",
+        "test:gemini": "node test-gemini.js",
+        "test:groq": "node test-groq.js"
+    },
+    "dependencies": {
+        "@google/generative-ai": "^0.21.0",
+        "groq-sdk": "^0.8.0",
+        "node-cache": "^5.1.2",
+        "dotenv": "^16.3.1",
+        "uuid": "^9.0.1"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

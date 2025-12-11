@@ -1,0 +1,7 @@
+{
+  "name": "WILI AI Workspace",
+  "description": "WILI - A professional, multi-modal AI dashboard featuring real-time internet search and diverse capability modes.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
