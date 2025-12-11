@@ -80,9 +80,9 @@ export function useArtifacts() {
             const language = codeBlockMatch[1] || 'text';
             const code = codeBlockMatch[2];
 
-            // Auto-trigger only if content > 15 lines (Ultimate Workspace Spec)
+            // Auto-trigger for content > 4 lines (More responsive)
             const lineCount = code.split('\n').length;
-            if (lineCount > 15 || language === 'html' || language === 'svg' || language === 'react') { // Always trigger for visual component types
+            if (lineCount > 4 || language === 'html' || language === 'svg' || language === 'react' || language === 'tsx' || language === 'jsx' || language === 'javascript' || language === 'js') {
                 let type: Artifact['type'] = 'code';
                 if (language === 'html') type = 'html';
                 else if (language === 'svg') type = 'svg';
