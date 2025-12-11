@@ -1220,4 +1220,37 @@ body {
   .new-chat-btn {
     min-height: 48px;
   }
+
+  /* Touch manipulation for better response */
+  button,
+  a,
+  .chat-item,
+  .feature-category button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Feature items in sidebar */
+  .feature-category button {
+    min-height: 44px;
+    padding: 0.625rem 0.5rem !important;
+  }
+
+  /* Sidebar scroll */
+  .sidebar,
+  .features-section {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Features section height on mobile */
+  .features-section {
+    max-height: 45vh;
+    overflow-y: auto;
+  }
+
+  /* Projects section */
+  .projects-section {
+    flex-shrink: 0;
+  }
 }

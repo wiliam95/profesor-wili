@@ -335,9 +335,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* ===== FEATURES SECTION (Dashboard) ===== */}
-      <div className="features-section px-4 py-3 border-t border-[--border-subtle] flex-1 min-h-0 overflow-y-auto">
+      <div className="features-section px-4 py-3 border-t border-[--border-subtle] flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <div className="section-header-fixed flex items-center gap-1.5 py-2 text-xs font-semibold text-[--text-muted] uppercase tracking-wider mb-2">
-          <span>DASHBOARD FITUR</span>
+          <span>🎯 DASHBOARD FITUR</span>
         </div>
 
         <div className="space-y-1">
@@ -347,7 +347,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div key={cat.id} className="feature-category">
                 <button
                   onClick={() => toggleFeatureCategory(cat.id)}
-                  className="w-full flex items-center justify-between px-2 py-1.5 text-sm text-[--text-secondary] hover:text-[--text-primary] hover:bg-[--bg-hover] rounded-md transition-colors"
+                  className="w-full flex items-center justify-between px-2 py-2.5 text-sm text-[--text-secondary] hover:text-[--text-primary] hover:bg-[--bg-hover] active:bg-[--bg-hover] rounded-md transition-colors touch-manipulation"
                 >
                   <div className="flex items-center gap-2">
                     <span>{cat.icon}</span>
@@ -362,7 +362,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <button
                         key={item.id}
                         onClick={() => handleAction(() => onSelectFeature?.(item.id, item.label))}
-                        className="w-full text-left px-2 py-1.5 text-xs text-[--text-muted] hover:text-[--accent-primary] hover:bg-[--bg-hover] rounded-md transition-colors truncate"
+                        className="w-full text-left px-2 py-2 text-xs text-[--text-muted] hover:text-[--accent-primary] hover:bg-[--bg-hover] active:bg-[--bg-hover] rounded-md transition-colors truncate touch-manipulation min-h-[36px] flex items-center"
                       >
                         {item.label}
                       </button>
@@ -418,7 +418,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Sidebar with CSS Transition */}
       <div className={`md:hidden fixed inset-0 z-[100] flex pointer-events-none ${mobileMenuOpen ? 'pointer-events-auto' : ''}`}>
         <div
-          className={`w-[260px] h-full bg-[--bg-primary] shadow-2xl transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`w-[280px] max-w-[85vw] h-full bg-[--bg-primary] shadow-2xl transition-transform duration-300 ease-in-out overflow-hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
           <SidebarContent />
         </div>
