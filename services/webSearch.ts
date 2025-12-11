@@ -11,6 +11,35 @@ const getEnv = (k: string): string | undefined => {
 };
 
 export const searchWeb = async (q: string, n: number = 5): Promise<WebItem[]> => {
+  // ============================================
+  // TIER 0: Vercel API Route (Bypass CORS)
+  // ============================================
+  try {
+    console.log('[WebSearch.ts] Trying Vercel API route...');
+    const apiResponse = await fetch('/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q, limit: n })
+    });
+
+    if (apiResponse.ok) {
+      const data = await apiResponse.json();
+      if (data.success && data.results?.length > 0) {
+        console.log(`[WebSearch.ts] ✓ API route returned ${data.results.length} results`);
+        return data.results.slice(0, n).map((r: any) => ({
+          title: String(r.title || 'Untitled'),
+          link: String(r.link || r.url || ''),
+          source: String(r.source || 'web')
+        }));
+      }
+    }
+  } catch (apiErr) {
+    console.log('[WebSearch.ts] API route unavailable, trying client-side...', apiErr);
+  }
+
+  // ============================================
+  // TIER 1: SerpAPI (if key available)
+  // ============================================
   const serpKey = getLocal("wili.serpapiKey") || getEnv("VITE_SERPAPI_KEY");
   const gCseKey = getLocal("wili.googleCseKey") || getEnv("VITE_GOOGLE_CSE_KEY");
   const gCseCx = getLocal("wili.googleCseCx") || getEnv("VITE_GOOGLE_CSE_CX");
@@ -28,8 +57,11 @@ export const searchWeb = async (q: string, n: number = 5): Promise<WebItem[]> =>
         })).filter(i => i.link);
       }
     }
-  } catch {}
+  } catch { }
 
+  // ============================================
+  // TIER 2: Google CSE (if key available)
+  // ============================================
   try {
     if (gCseKey && gCseCx) {
       const r = await fetch(`https://www.googleapis.com/customsearch/v1?key=${gCseKey}&cx=${gCseCx}&q=${encodeURIComponent(q)}`);
@@ -43,24 +75,25 @@ export const searchWeb = async (q: string, n: number = 5): Promise<WebItem[]> =>
         })).filter(i => i.link);
       }
     }
-  } catch {}
+  } catch { }
 
+  // ============================================
+  // TIER 3: Wikipedia API (CORS supported)
+  // ============================================
   try {
-    const r = await fetch(`https://r.jina.ai/http://duckduckgo.com/html/?q=${encodeURIComponent(q)}`);
-    if (r.ok) {
-      const html = await r.text();
-      const results: WebItem[] = [];
-      const regex = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)<\/a>/gi;
-      let m: RegExpExecArray | null;
-      while ((m = regex.exec(html)) && results.length < n) {
-        const link = m[1];
-        const title = m[2].replace(/<[^>]+>/g, "").trim();
-        const source = link.replace(/^https?:\/\//, "").split("/")[0];
-        if (link && title) results.push({ title, link, source });
+    console.log('[WebSearch.ts] Trying Wikipedia API...');
+    const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`);
+    if (wikiRes.ok) {
+      const data = await wikiRes.json();
+      if (data.query?.search?.length > 0) {
+        return data.query.search.slice(0, n).map((r: any) => ({
+          title: String(r.title || 'Untitled'),
+          link: `https://en.wikipedia.org/wiki/${encodeURIComponent(r.title)}`,
+          source: 'wikipedia.org'
+        }));
       }
-      if (results.length) return results;
     }
-  } catch {}
+  } catch { }
 
   return [];
 };
