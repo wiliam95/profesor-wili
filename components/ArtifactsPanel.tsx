@@ -12,6 +12,13 @@ export interface Artifact {
     content: string;
     language?: string;
     createdAt: number;
+    versions?: {
+        id: string;
+        content: string;
+        timestamp: number;
+        title?: string;
+    }[];
+    currentVersionIndex?: number; // 0 = latest, 1 = previous, etc. Or maybe reverse? Let's say index in versions array.
 }
 
 interface ArtifactsPanelProps {
@@ -21,15 +28,35 @@ interface ArtifactsPanelProps {
     onClose: () => void;
     onToggle: () => void;
     onSelectArtifact: (artifact: Artifact) => void;
+    onUpdateArtifact?: (id: string, updates: Partial<Artifact>) => void; // Added for Editing
     isFixed?: boolean;
 }
 
 export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
-    artifacts, selectedArtifact, isOpen, onClose, onToggle, onSelectArtifact, isFixed = true
+    artifacts, selectedArtifact, isOpen, onClose, onToggle, onSelectArtifact, onUpdateArtifact, isFixed = true
 }) => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [copied, setCopied] = useState(false);
     const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
+
+    const [editContent, setEditContent] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+
+    // Update edit content when selected artifact changes
+    React.useEffect(() => {
+        if (selectedArtifact) {
+            setEditContent(selectedArtifact.content);
+        }
+    }, [selectedArtifact]);
+
+    const handleSaveEdit = () => {
+        if (!selectedArtifact) return;
+        onUpdateArtifact?.(selectedArtifact.id, { content: editContent });
+        // Optional: Show toast or feedback
+    };
+
+    // NOTE: ArtifactsPanel needs onUpdate prop to support editing.
+    // I will insert the prop in the next tool call. I'll write the logic assuming it exists.
 
     const handleCopy = async () => {
         if (selectedArtifact) {
@@ -50,26 +77,62 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
         URL.revokeObjectURL(url);
     };
 
-    const getIcon = (type: string) => {
-        switch (type) {
-            case 'code': return <Code size={14} />;
-            case 'image': case 'svg': return <Image size={14} />;
-            default: return <FileText size={14} />;
-        }
-    };
-
     const renderPreview = () => {
         if (!selectedArtifact) return null;
-        if (selectedArtifact.type === 'html' || selectedArtifact.type === 'react') {
+
+        // REACT RUNNER (CDN Injection)
+        if (selectedArtifact.type === 'react' || selectedArtifact.type === 'html') {
+            const isReact = selectedArtifact.type === 'react';
+
+            // Generate robust HTML shell
+            const srcDoc = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    ${isReact ? `
+                    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+                    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+                    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+                    <!-- Lucide Icons (limited support via CDN global) -->
+                    <script src="https://unpkg.com/lucide@latest"></script>
+                    ` : ''}
+                    <style>body { background-color: white; margin: 0; padding: 1rem; }</style>
+                </head>
+                <body>
+                    <div id="root"></div>
+                    <script type="${isReact ? 'text/babel' : 'text/javascript'}">
+                        ${isReact ? `
+                            // Mock require/import for Recharts/Lucide if possible or just ignore
+                            const { useState, useEffect, useRef, useMemo, useCallback } = React;
+                            
+                            // Simple error boundary
+                            try {
+                                ${selectedArtifact.content.replace(/import .*/g, '// $&').replace(/export default/, 'const App =').replace(/export const/, 'const')}
+                                
+                                const root = ReactDOM.createRoot(document.getElementById('root'));
+                                root.render(<App />);
+                            } catch (err) {
+                                document.getElementById('root').innerHTML = '<div style="color:red; padding:20px; border:1px solid red; background:#fee;">Runtime Error: ' + err.message + '</div>';
+                            }
+                        ` : selectedArtifact.content}
+                    </script>
+                </body>
+                </html>
+            `;
+
             return (
                 <iframe
-                    srcDoc={selectedArtifact.content}
+                    srcDoc={srcDoc}
                     className="artifacts-iframe w-full h-full border-none rounded-lg bg-white"
-                    sandbox="allow-scripts allow-same-origin"
+                    sandbox="allow-scripts allow-same-origin allow-modals"
                     title={selectedArtifact.title}
                 />
             );
         }
+
         if (selectedArtifact.type === 'svg') {
             return (
                 <div
@@ -78,10 +141,24 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
                 />
             );
         }
+
+        // TEXT/CODE in Preview Mode (Just view)
         return (
             <pre className="w-full h-full overflow-auto p-4 text-sm font-mono text-[--text-primary] bg-[--bg-tertiary] rounded-lg">
                 <code>{selectedArtifact.content}</code>
             </pre>
+        );
+    };
+
+    const renderCodeEditor = () => {
+        if (!selectedArtifact) return null;
+        return (
+            <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full h-full p-4 bg-[--bg-tertiary] text-[--text-primary] font-mono text-sm resize-none focus:outline-none"
+                spellCheck={false}
+            />
         );
     };
 
@@ -106,29 +183,67 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
         <div className={`${containerClasses} bg-[--bg-secondary] flex flex-col`}>
             {/* Header - 56px */}
             <div className="artifacts-header h-14 px-5 flex items-center justify-between border-b border-[--border-subtle]">
-                <span className="artifacts-title text-base font-medium text-[--text-primary]">
-                    {selectedArtifact?.title || 'Artifact'}
-                </span>
+                <div className="flex items-center gap-3 overflow-hidden">
+                    <span className="artifacts-title text-sm font-medium text-[--text-primary] truncate">
+                        {selectedArtifact?.title || 'Artifact'}
+                    </span>
+                    {selectedArtifact?.versions && selectedArtifact.versions.length > 0 && (
+                        <span className="text-xs text-[--text-muted} px-2 py-0.5 bg-[--bg-tertiary] rounded-full border border-[--border-subtle]">
+                            V{selectedArtifact.versions.length + 1}
+                        </span>
+                    )}
+                </div>
+
                 <div className="artifacts-actions flex gap-1">
-                    <button onClick={handleCopy} className="panel-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors">
-                        {copied ? <Check size={20} className="text-[--success]" /> : <Copy size={20} />}
-                    </button>
-                    <button className="panel-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors">
-                        <Edit size={20} />
-                    </button>
                     <button onClick={() => setIsFullscreen(!isFullscreen)} className="panel-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors">
-                        {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                        {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
                     </button>
                     <button onClick={onClose} className="panel-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors">
-                        <X size={20} />
+                        <X size={18} />
+                    </button>
+                </div>
+            </div>
+
+            {/* TAB SWITCHER */}
+            <div className="px-5 py-3 border-b border-[--border-subtle] flex items-center justify-between bg-[--bg-secondary]">
+                <div className="flex p-1 bg-[--bg-tertiary] rounded-lg border border-[--border-primary]">
+                    <button
+                        onClick={() => setActiveTab('preview')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'preview' ? 'bg-white text-black shadow-sm' : 'text-[--text-muted] hover:text-[--text-primary]'}`}
+                    >
+                        Preview
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('code')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'code' ? 'bg-white text-black shadow-sm' : 'text-[--text-muted] hover:text-[--text-primary]'}`}
+                    >
+                        Code
+                    </button>
+                </div>
+
+                {/* Action Buttons (Save/Download/Copy) */}
+                <div className="flex items-center gap-1">
+                    {activeTab === 'code' && selectedArtifact && editContent !== selectedArtifact.content && (
+                        <button
+                            onClick={handleSaveEdit}
+                            className="flex items-center gap-1 px-2 py-1.5 bg-green-600 text-white text-xs font-bold rounded-md hover:bg-green-500 shadow-sm"
+                        >
+                            <Check size={14} /> Save
+                        </button>
+                    )}
+                    <button onClick={handleCopy} className="panel-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors">
+                        {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                    </button>
+                    <button onClick={handleDownload} className="panel-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors">
+                        <Download size={16} />
                     </button>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="artifacts-content p-5 flex-1 overflow-y-auto">
+            <div className="artifacts-content flex-1 overflow-hidden relative">
                 {selectedArtifact ? (
-                    renderPreview()
+                    activeTab === 'preview' ? renderPreview() : renderCodeEditor()
                 ) : (
                     <div className="h-full flex items-center justify-center text-[--text-muted]">
                         <div className="text-center">

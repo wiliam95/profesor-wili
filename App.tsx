@@ -1531,6 +1531,7 @@ To enable real AI responses:
             artifacts={artifacts}
             selectedArtifact={selectedArtifact}
             onSelectArtifact={selectArtifact}
+            onUpdateArtifact={updateArtifact}
             isFixed={false} // Embedded mode
           />
         </div>

@@ -33,12 +33,38 @@ export function useArtifacts() {
 
     const updateArtifact = useCallback((id: string, updates: Partial<Artifact>) => {
         setArtifacts(prev => {
-            const updated = prev.map(a => a.id === id ? { ...a, ...updates } : a);
+            const updated = prev.map(a => {
+                if (a.id === id) {
+                    // Handle Versioning if content changes
+                    let newVersions = a.versions || [];
+                    if (updates.content && updates.content !== a.content) {
+                        newVersions = [
+                            { id: uuidv4(), content: a.content, timestamp: Date.now(), title: a.title },
+                            ...newVersions
+                        ];
+                    }
+
+                    return { ...a, ...updates, versions: newVersions };
+                }
+                return a;
+            });
             saveToStorage(updated);
             return updated;
         });
+
         if (selectedArtifact?.id === id) {
-            setSelectedArtifact(prev => prev ? { ...prev, ...updates } : null);
+            setSelectedArtifact(prev => {
+                if (!prev) return null;
+                // Update selected artifact state
+                let newVersions = prev.versions || [];
+                if (updates.content && updates.content !== prev.content) {
+                    newVersions = [
+                        { id: uuidv4(), content: prev.content, timestamp: Date.now(), title: prev.title },
+                        ...newVersions
+                    ];
+                }
+                return { ...prev, ...updates, versions: newVersions };
+            });
         }
     }, [selectedArtifact, saveToStorage]);
 
