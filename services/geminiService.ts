@@ -141,27 +141,34 @@ export const streamChatResponse = async (
 
     // 1. Client-Side Search (DuckDuckGo) for Vercel
     let searchContext = '';
-    const isQuestion = /\b(cari|search|info|berita|news|apa|siapa|kapan|dimana)\b/i.test(message);
 
-    if (isQuestion && isInternetEnabled) {
+    // V3 Search Logic: Always search if internet enabled (broaden scope)
+    if (isInternetEnabled && message.split(' ').length > 1) {
       try {
         console.log('[WILI] Searching DuckDuckGo (Client-Side)...');
         const q = encodeURIComponent(message.replace(/\b(cari|search|info|berita)\b/gi, ''));
-        // DuckDuckGo Instant Answer API (via CORS Proxy)
         const ddgUrl = `https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`;
-        const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(ddgUrl);
 
-        const ddr = await fetch(proxyUrl).then(r => r.json());
+        // Try Primary Proxy (corsproxy.io)
+        let ddr = null;
+        try {
+          ddr = await fetch(`https://corsproxy.io/?` + encodeURIComponent(ddgUrl)).then(r => r.json());
+        } catch (e1) {
+          console.log('Primary Proxy Failed, trying backup...');
+          // Backup Proxy (allorigins)
+          const backup = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(ddgUrl)}`).then(r => r.json());
+          if (backup.contents) ddr = JSON.parse(backup.contents);
+        }
 
-        if (ddr.Abstract || (ddr.RelatedTopics && ddr.RelatedTopics.length)) {
-          searchContext = `[HASIL PENCARIAN CLIENT-SIDE (DUCKDUCKGO)]\n`;
+        if (ddr && (ddr.Abstract || (ddr.RelatedTopics && ddr.RelatedTopics.length))) {
+          searchContext = `[SYSTEM: REAL-TIME WEB SEARCH RESULTS]\n`;
           if (ddr.Abstract) searchContext += `- ${ddr.Abstract}\n`;
           if (ddr.RelatedTopics) {
-            ddr.RelatedTopics.slice(0, 3).forEach((t: any) => {
+            ddr.RelatedTopics.slice(0, 4).forEach((t: any) => {
               if (t.Text && t.FirstURL) searchContext += `- ${t.Text} (${t.FirstURL})\n`;
             });
           }
-          searchContext += '\n[Gunakan informasi pencarian di atas untuk melengkapi jawaban]\n\n';
+          searchContext += `\n[INSTRUCTION: Use the above real-time information to answer the user's question. Ignore your knowledge cutoff date.]\n\n`;
         }
       } catch (e) {
         console.log('[WILI] Client Search Failed', e);
@@ -169,13 +176,16 @@ export const streamChatResponse = async (
     }
 
     try {
+      // Prompt Injection Strategy: Put context in USER message for higher attention
+      const finalPrompt = searchContext ? (searchContext + message) : message;
+
       const response = await fetch('https://text.pollinations.ai/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'You are a helpful AI assistant. ' + (searchContext ? 'Important: I have performed a web search for you. Use the results below to answer.' : '') },
-            { role: 'user', content: searchContext + message }
+            { role: 'system', content: 'You are Wili, a helpful AI assistant with real-time web access. Always use provided search results to answer securely.' },
+            { role: 'user', content: finalPrompt }
           ],
           model: 'openai'
         })
@@ -190,7 +200,7 @@ export const streamChatResponse = async (
         outputTokens: text.length,
         latencyMs: 0,
         totalCost: "Free (Cloud)"
-      }, undefined);
+      }, undefined); // No citation object for now
       return true;
 
     } catch (e) {
