@@ -334,8 +334,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* ===== FEATURES SECTION (Dashboard) ===== */}
-      <div className="features-section px-4 py-3 border-t border-[--border-subtle] flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+      {/* ===== FEATURES SECTION (Dashboard) - ALWAYS VISIBLE ===== */}
+      <div className="features-section px-4 py-3 border-t border-[--border-subtle] min-h-[150px] overflow-y-auto overflow-x-hidden">
         <div className="section-header-fixed flex items-center gap-1.5 py-2 text-xs font-semibold text-[--text-muted] uppercase tracking-wider mb-2">
           <span>🎯 DASHBOARD FITUR</span>
         </div>

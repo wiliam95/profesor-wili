@@ -80,9 +80,25 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
     const renderPreview = () => {
         if (!selectedArtifact) return null;
 
-        // REACT RUNNER (CDN Injection)
+        // REACT RUNNER (CDN Injection) - Improved Version 2025
         if (selectedArtifact.type === 'react' || selectedArtifact.type === 'html') {
             const isReact = selectedArtifact.type === 'react';
+
+            // Pre-process React code for iframe execution
+            const processReactCode = (code: string) => {
+                // Remove all import statements (single and multi-line)
+                let processed = code.replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"];?/g, '// [Removed Import]');
+                processed = processed.replace(/import\s+['"][^'"]+['"];?/g, '// [Removed Import]');
+
+                // Handle various export patterns
+                processed = processed.replace(/export\s+default\s+function\s+(\w+)/g, 'function $1');
+                processed = processed.replace(/export\s+default\s+(\w+);?/g, 'const App = $1;');
+                processed = processed.replace(/export\s+default\s+\(([^)]*?)\)\s*=>/g, 'const App = ($1) =>');
+                processed = processed.replace(/export\s+const\s+(\w+)/g, 'const $1');
+                processed = processed.replace(/export\s+function\s+(\w+)/g, 'function $1');
+
+                return processed;
+            };
 
             // Generate robust HTML shell
             const srcDoc = `
@@ -96,26 +112,39 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
                     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
                     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
                     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-                    <!-- Lucide Icons (limited support via CDN global) -->
                     <script src="https://unpkg.com/lucide@latest"></script>
                     ` : ''}
-                    <style>body { background-color: white; margin: 0; padding: 1rem; }</style>
+                    <style>
+                        body { background-color: white; margin: 0; padding: 1rem; font-family: system-ui, sans-serif; }
+                        .error-display { color: #dc2626; padding: 20px; border: 1px solid #dc2626; background: #fef2f2; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 12px; }
+                    </style>
                 </head>
                 <body>
                     <div id="root"></div>
                     <script type="${isReact ? 'text/babel' : 'text/javascript'}">
                         ${isReact ? `
-                            // Mock require/import for Recharts/Lucide if possible or just ignore
-                            const { useState, useEffect, useRef, useMemo, useCallback } = React;
+                            // React Hooks available globally
+                            const { useState, useEffect, useRef, useMemo, useCallback, useContext, useReducer } = React;
                             
-                            // Simple error boundary
                             try {
-                                ${selectedArtifact.content.replace(/import .*/g, '// $&').replace(/export default/, 'const App =').replace(/export const/, 'const')}
+                                ${processReactCode(selectedArtifact.content)}
                                 
+                                // Try to render App component
                                 const root = ReactDOM.createRoot(document.getElementById('root'));
-                                root.render(<App />);
+                                if (typeof App !== 'undefined') {
+                                    root.render(React.createElement(App));
+                                } else {
+                                    // Look for any capitalized function that could be a component
+                                    const componentNames = Object.keys(window).filter(k => /^[A-Z]/.test(k) && typeof window[k] === 'function');
+                                    if (componentNames.length > 0) {
+                                        root.render(React.createElement(window[componentNames[0]]));
+                                    } else {
+                                        document.getElementById('root').innerHTML = '<div class="error-display">No React component found. Make sure you have an "App" function or export default.</div>';
+                                    }
+                                }
                             } catch (err) {
-                                document.getElementById('root').innerHTML = '<div style="color:red; padding:20px; border:1px solid red; background:#fee;">Runtime Error: ' + err.message + '</div>';
+                                document.getElementById('root').innerHTML = '<div class="error-display">Runtime Error:\\n' + err.message + '</div>';
+                                console.error('[Artifact Preview Error]', err);
                             }
                         ` : selectedArtifact.content}
                     </script>
