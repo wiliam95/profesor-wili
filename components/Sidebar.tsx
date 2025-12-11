@@ -416,7 +416,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Mobile Drawer */}
       {/* Mobile Sidebar with CSS Transition */}
-      <div className={`md:hidden fixed inset-0 z-50 flex pointer-events-none ${mobileMenuOpen ? 'pointer-events-auto' : ''}`}>
+      <div className={`md:hidden fixed inset-0 z-[100] flex pointer-events-none ${mobileMenuOpen ? 'pointer-events-auto' : ''}`}>
         <div
           className={`w-[260px] h-full bg-[--bg-primary] shadow-2xl transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >

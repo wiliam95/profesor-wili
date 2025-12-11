@@ -147,8 +147,11 @@ export const streamChatResponse = async (
       try {
         console.log('[WILI] Searching DuckDuckGo (Client-Side)...');
         const q = encodeURIComponent(message.replace(/\b(cari|search|info|berita)\b/gi, ''));
-        // DuckDuckGo Instant Answer API (CORS friendly-ish)
-        const ddr = await fetch(`https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`).then(r => r.json());
+        // DuckDuckGo Instant Answer API (via CORS Proxy)
+        const ddgUrl = `https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`;
+        const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(ddgUrl);
+
+        const ddr = await fetch(proxyUrl).then(r => r.json());
 
         if (ddr.Abstract || (ddr.RelatedTopics && ddr.RelatedTopics.length)) {
           searchContext = `[HASIL PENCARIAN CLIENT-SIDE (DUCKDUCKGO)]\n`;

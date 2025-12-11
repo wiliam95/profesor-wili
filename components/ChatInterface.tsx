@@ -148,18 +148,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }
 
-      // Android Fix: Avoid appending if transcript is identical loop
+      // Android Fix V2: Strict Dedup
       const cleanFinal = finalTranscript.trim();
+      const currentFull = textBeforeRef.current.trim();
 
-      if (cleanFinal) {
-        // Only append if it's new content (simple check)
-        if (!textBeforeRef.current.endsWith(cleanFinal)) {
-          textBeforeRef.current += (textBeforeRef.current ? ' ' : '') + cleanFinal;
-        }
+      if (cleanFinal && !currentFull.endsWith(cleanFinal)) {
+        // Double check overlap to avoid "Hello Hello world" -> "Hello world"
+        // If the new phrase is NOT just a repetition of the last few words
+        textBeforeRef.current += (textBeforeRef.current ? ' ' : '') + cleanFinal;
       }
 
-      const currentText = textBeforeRef.current + (interimTranscript ? ' ' + interimTranscript : '');
-      setInputText(currentText);
+      const display = textBeforeRef.current + (interimTranscript ? ' ' + interimTranscript : '');
+      setInputText(display);
     };
 
     recognition.onerror = (event: any) => {

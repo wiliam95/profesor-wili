@@ -39,7 +39,7 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="app-layout flex h-screen w-screen overflow-hidden bg-[--bg-primary]">
+    <div className="app-layout flex h-[100dvh] w-screen overflow-hidden bg-[--bg-primary]">
 
       {/* Sidebar - 260px */}
       {sidebar}
