@@ -22,8 +22,5 @@
             "src": "/(.*)",
             "dest": "/$1"
         }
-    ],
-    "env": {
-        "DEEPAI_API_KEY": "@deepai-key"
-    }
+    ]
 }
