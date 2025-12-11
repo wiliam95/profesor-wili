@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
-  Send, Paperclip, Mic, Copy, Check, ChevronDown, StopCircle, Share, Trash2, Edit, MoreHorizontal
+  Send, Paperclip, Mic, Copy, Check, ChevronDown, StopCircle, Share, Trash2, Edit, MoreHorizontal, Camera
 } from 'lucide-react';
 import { Message, Role, Attachment, ModelType } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -358,21 +358,37 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               rows={1}
               aria-label="Kirim pesan"
             />
-            <div className="input-actions flex gap-2">
+            <div className="input-actions flex gap-1">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="input-btn w-9 h-9 flex items-center justify-center rounded-md text-[--text-muted] hover:text-[--text-primary] transition-colors"
+                className="input-btn w-9 h-9 flex items-center justify-center rounded-md text-[--text-muted] hover:text-[--text-primary] hover:bg-[--bg-hover] transition-colors touch-manipulation"
                 title="Lampirkan file"
+                aria-label="Lampirkan file"
               >
                 <Paperclip size={20} />
               </button>
               <button
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.capture = 'environment';
+                  input.onchange = (e) => handleFiles((e.target as HTMLInputElement).files);
+                  input.click();
+                }}
+                className="input-btn w-9 h-9 flex items-center justify-center rounded-md text-[--text-muted] hover:text-[--text-primary] hover:bg-[--bg-hover] transition-colors touch-manipulation"
+                title="Ambil foto"
+                aria-label="Ambil foto dengan kamera"
+              >
+                <Camera size={20} />
+              </button>
+              <button
                 onClick={isRecording ? stopVoice : startVoice}
-                className={`input-btn w-9 h-9 flex items-center justify-center rounded-md transition-colors ${isRecording ? 'recording text-[--error]' : 'text-[--text-muted] hover:text-[--text-primary]'
+                className={`input-btn w-9 h-9 flex items-center justify-center rounded-md transition-colors touch-manipulation ${isRecording ? 'recording text-[--error] bg-red-500/20' : 'text-[--text-muted] hover:text-[--text-primary] hover:bg-[--bg-hover]'
                   }`}
                 title="Input suara"
+                aria-label="Input suara"
               >
-                <div className={`scan-line ${isRecording ? 'active' : ''}`}></div>
                 <Mic size={20} className={isRecording ? 'animate-pulse text-red-500' : ''} />
               </button>
               <button
