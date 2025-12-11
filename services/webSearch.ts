@@ -16,9 +16,14 @@ export const searchWeb = async (q: string, n: number = 5): Promise<WebItem[]> =>
   // ============================================
   try {
     console.log('[WebSearch.ts] Trying Vercel API route...');
+    const serperKey = getLocal("wili.serperKey") || getEnv("VITE_SERPER_API_KEY");
+
     const apiResponse = await fetch('/api/search', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-serper-key': serperKey || ''
+      },
       body: JSON.stringify({ query: q, limit: n })
     });
 
