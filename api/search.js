@@ -57,7 +57,46 @@ export default async function handler(req, res) {
         }
 
         // ============================================
-        // PRIORITY 2: Wikipedia (Fallback)
+        // PRIORITY 2: Tavily (AI Search)
+        // ============================================
+        const tavilyKey = req.headers['x-tavily-key'] || process.env.TAVILY_API_KEY;
+        if (results.length === 0 && tavilyKey) {
+            try {
+                console.log('[API/Search] Trying Tavily...');
+                const tavilyRes = await fetch('https://api.tavily.com/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        api_key: tavilyKey,
+                        query: query,
+                        search_depth: "basic",
+                        max_results: limit
+                    })
+                });
+
+                if (tavilyRes.ok) {
+                    const data = await tavilyRes.json();
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(item => {
+                            results.push({
+                                title: item.title,
+                                link: item.url,
+                                source: 'Tavily (AI)',
+                                snippet: item.content
+                            });
+                        });
+                        console.log(`[API/Search] ✓ Tavily returned ${results.length} results`);
+                    }
+                } else {
+                    console.error('[API/Search] Tavily error:', await tavilyRes.text());
+                }
+            } catch (tavilyError) {
+                console.error('[API/Search] Tavily failed:', tavilyError.message);
+            }
+        }
+
+        // ============================================
+        // PRIORITY 3: Wikipedia (Fallback)
         // ============================================
         if (results.length === 0) {
             try {

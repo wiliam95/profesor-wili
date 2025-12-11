@@ -1430,7 +1430,8 @@ To enable real AI responses:
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-bold text-white">Web Search Keys</h3>
-                    <p className="text-xs text-slate-500">Optional - Google Programmable Search (CSE) atau SerpAPI</p>
+                    <h3 className="text-lg font-bold text-white">Web Search Keys</h3>
+                    <p className="text-xs text-slate-500">Optional - Serper (Google), Tavily, atau SerpAPI</p>
                   </div>
                   <span className="px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded border border-slate-700">Optional</span>
                 </div>
@@ -1443,9 +1444,15 @@ To enable real AI responses:
                   />
                   <input
                     type="text"
-                    placeholder="VITE_GOOGLE_CSE_CX"
-                    onChange={(e) => { try { localStorage.setItem('wili.googleCseCx', e.target.value) } catch { } }}
+                    placeholder="Serper API Key (Recommended)"
+                    onChange={(e) => { try { localStorage.setItem('wili.serperKey', e.target.value) } catch { } }}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white font-mono text-sm focus:outline-none focus:border-green-500 placeholder:text-slate-700"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Tavily API Key (AI Optimized)"
+                    onChange={(e) => { try { localStorage.setItem('wili.tavilyKey', e.target.value) } catch { } }}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white font-mono text-sm focus:outline-none focus:border-blue-500 placeholder:text-slate-700"
                   />
                   <input
                     type="text"
