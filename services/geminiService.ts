@@ -128,12 +128,49 @@ export const streamChatResponse = async (
   const serviceType = resolveServiceType(chosen);
 
 
+  // Direct Client-Side Pollinations Fallback (For Vercel / Cloud Deployment)
+  const tryPollinationsDirect = async (message: string): Promise<boolean> => {
+    console.log('[WILI] Attempting Direct Pollinations API (Client-Side)...');
+    try {
+      const response = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: message }],
+          model: 'openai'
+        })
+      });
+
+      if (!response.ok) throw new Error('Pollinations API Error');
+      const text = await response.text();
+
+      onChunk(text);
+      onComplete({
+        inputTokens: 0,
+        outputTokens: text.length,
+        latencyMs: 0,
+        totalCost: "Free (Cloud)"
+      }, undefined);
+      return true;
+
+    } catch (e) {
+      console.error('[WILI] Direct Pollinations Failed:', e);
+      return false;
+    }
+  };
+
   // Route to Scraping Service (Fallback)
   const tryScraperFallback = async (): Promise<boolean> => {
     console.log(`[WILI] Using Scraping Service (Fallback)`);
 
     // Standard local scraper URL or env override
     const scraperUrl = (import.meta as any)?.env?.VITE_SCRAPER_URL || 'http://localhost:3000/api/chat';
+
+    // 0. Vercel / Cloud Detection (Skip Localhost)
+    if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+      console.log('[WILI] Vercel Environment Detected. Skipping Localhost, switching to Cloud Direct.');
+      return await tryPollinationsDirect(newMessage || history[history.length - 1]?.text || '');
+    }
 
     try {
       // 1. Check if scraper is online
@@ -179,8 +216,8 @@ export const streamChatResponse = async (
 
     } catch (e) {
       console.error('[WILI] Scraper Fallback Failed:', e);
-      // If scraper fails, throw error so we can cascade to next or show error
-      throw new Error('Scraping service unavailable and no API Key found.');
+      // Fallback to Direct Pollinations if backend is dead (Crucial for Vercel)
+      return await tryPollinationsDirect(newMessage || history[history.length - 1]?.text || '');
     }
   };
 
