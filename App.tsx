@@ -16,6 +16,7 @@ import ArtifactsPanel from './components/ArtifactsPanel';
 import ArtifactsSpace from './components/ArtifactsSpace';
 import { SettingsPanel } from './components/SettingsPanel';
 import useArtifacts from './hooks/useArtifacts';
+import { useChatHistory } from './hooks/useChatHistory';
 import { v4 as uuid } from 'uuid';
 
 interface ChatSession {
@@ -46,11 +47,11 @@ function App() {
     togglePanel, closePanel, extractArtifactFromMessage
   } = useArtifacts();
 
-  // Chat History Management
-  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string>('');
 
-  // API Keys migrated to SettingsPanel
+  // Chat History Management (Refactored Phase 2)
+  const { chatSessions, setChatSessions } = useChatHistory(messages, currentChatId);
+
   const [pyReady, setPyReady] = useState(false);
   const ensurePyodide = async (): Promise<any> => {
     if ((window as any).pyodide) return (window as any).pyodide;
@@ -66,16 +67,8 @@ function App() {
     return py;
   };
 
-  // Load chat sessions on mount
+  // Load chat sessions on mount (Handled by hook)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('wili.chatSessions');
-      if (saved) {
-        setChatSessions(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error('Failed to load chat sessions:', error);
-    }
     try {
       const params = new URLSearchParams(window.location.search);
       const share = params.get('share');
@@ -86,75 +79,12 @@ function App() {
           const id = uuidv4();
           setCurrentChatId(id);
           setMessages(msgs);
-          try {
-            const title = msgs.find((m: any) => m.role === 'user')?.text?.substring(0, 50) || 'Shared Chat';
-            setChatSessions(prev => {
-              const updated = [...prev, { id, title, messages: msgs, timestamp: Date.now() } as any];
-              localStorage.setItem('wili.chatSessions', JSON.stringify(updated));
-              return updated;
-            });
-          } catch { }
+          // Hook auto-saves this state
         }
       }
     } catch { }
   }, []);
 
-  // Auto-save current chat
-  useEffect(() => {
-    if (messages.length > 0 && currentChatId) {
-      const updateSession = () => {
-        setChatSessions(prev => {
-          const updated = prev.map(session =>
-            session.id === currentChatId
-              ? { ...session, messages, timestamp: Date.now() }
-              : session
-          );
-
-          // If session doesn't exist, create it
-          if (!updated.find(s => s.id === currentChatId)) {
-            const title = messages[0]?.text.substring(0, 50) || 'New Chat';
-            updated.push({
-              id: currentChatId,
-              title,
-              messages,
-              timestamp: Date.now()
-            });
-          }
-
-          // Save to localStorage
-          try {
-            localStorage.setItem('wili.chatSessions', JSON.stringify(updated));
-          } catch (error) {
-            console.error('Failed to save chat sessions:', error);
-          }
-
-          return updated;
-        });
-      };
-
-      // Debounce save
-      const timeout = setTimeout(updateSession, 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [messages, currentChatId]);
-
-  // Sync chatSessions -> wili.chatHistory
-  useEffect(() => {
-    try {
-      const mapped = (chatSessions || []).map((s: any) => ({
-        id: s.id,
-        title: s.title || (s.messages?.find((m: any) => m.role === 'user')?.text?.slice(0, 50) || 'Chat'),
-        preview: String((s.messages || []).find((m: any) => m.role === 'user')?.text || (s.messages || [])[0]?.text || '')
-          .slice(0, 80),
-        timestamp: s.timestamp || Date.now(),
-        isPinned: !!s.isPinned,
-        isArchived: !!s.isArchived,
-        folderId: s.folderId,
-        tag: s.tag
-      }));
-      localStorage.setItem('wili.chatHistory', JSON.stringify(mapped));
-    } catch { }
-  }, [chatSessions]);
 
   // testGoogleKey and handleSaveSettings moved to SettingsPanel
 

@@ -114,6 +114,17 @@ export interface Persona {
 
 export type View = 'chat' | 'bot-builder' | 'analytics' | 'settings' | 'login' | 'artifacts';
 
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  timestamp: number;
+  isPinned?: boolean;
+  isArchived?: boolean;
+  folderId?: string;
+  tag?: string;
+}
+
 export interface FeatureItem {
   id: string;
   label: string;
