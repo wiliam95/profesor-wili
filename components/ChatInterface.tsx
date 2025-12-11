@@ -148,14 +148,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }
 
-      // If we have final results, append them to textBeforeRef and update it
-      if (finalTranscript) {
-        textBeforeRef.current += (textBeforeRef.current ? ' ' : '') + finalTranscript;
-        finalTranscript = ''; // Reset after appending
+      // Android Fix: Avoid appending if transcript is identical loop
+      const cleanFinal = finalTranscript.trim();
+
+      if (cleanFinal) {
+        // Only append if it's new content (simple check)
+        if (!textBeforeRef.current.endsWith(cleanFinal)) {
+          textBeforeRef.current += (textBeforeRef.current ? ' ' : '') + cleanFinal;
+        }
       }
 
-      // Display: Base Text + Interim
-      const currentText = textBeforeRef.current + (interimTranscript ? interimTranscript : '');
+      const currentText = textBeforeRef.current + (interimTranscript ? ' ' + interimTranscript : '');
       setInputText(currentText);
     };
 

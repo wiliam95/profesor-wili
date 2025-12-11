@@ -43,8 +43,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [hoveredChatId, setHoveredChatId] = useState<string | null>(null);
 
-  // Feature menu state
-  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({});
+  // Feature menu state - Expand all by default
+  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>(() => {
+    const defaults: Record<string, boolean> = {};
+    FEATURE_CATEGORIES.forEach(cat => defaults[cat.id] = true);
+    return defaults;
+  });
 
   const toggleFeatureCategory = (catId: string) => {
     setExpandedFeatures(prev => ({ ...prev, [catId]: !prev[catId] }));

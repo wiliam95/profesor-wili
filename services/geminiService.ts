@@ -131,12 +131,42 @@ export const streamChatResponse = async (
   // Direct Client-Side Pollinations Fallback (For Vercel / Cloud Deployment)
   const tryPollinationsDirect = async (message: string): Promise<boolean> => {
     console.log('[WILI] Attempting Direct Pollinations API (Client-Side)...');
+
+    // 1. Client-Side Search (DuckDuckGo) for Vercel
+    let searchContext = '';
+    const isQuestion = /\b(cari|search|info|berita|news|apa|siapa|kapan|dimana)\b/i.test(message);
+
+    if (isQuestion && isInternetEnabled) {
+      try {
+        console.log('[WILI] Searching DuckDuckGo (Client-Side)...');
+        const q = encodeURIComponent(message.replace(/\b(cari|search|info|berita)\b/gi, ''));
+        // DuckDuckGo Instant Answer API (CORS friendly-ish)
+        const ddr = await fetch(`https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`).then(r => r.json());
+
+        if (ddr.Abstract || (ddr.RelatedTopics && ddr.RelatedTopics.length)) {
+          searchContext = `[HASIL PENCARIAN CLIENT-SIDE (DUCKDUCKGO)]\n`;
+          if (ddr.Abstract) searchContext += `- ${ddr.Abstract}\n`;
+          if (ddr.RelatedTopics) {
+            ddr.RelatedTopics.slice(0, 3).forEach((t: any) => {
+              if (t.Text && t.FirstURL) searchContext += `- ${t.Text} (${t.FirstURL})\n`;
+            });
+          }
+          searchContext += '\n[Gunakan informasi pencarian di atas untuk melengkapi jawaban]\n\n';
+        }
+      } catch (e) {
+        console.log('[WILI] Client Search Failed', e);
+      }
+    }
+
     try {
       const response = await fetch('https://text.pollinations.ai/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [{ role: 'user', content: message }],
+          messages: [
+            { role: 'system', content: 'You are a helpful AI assistant. ' + (searchContext ? 'Important: I have performed a web search for you. Use the results below to answer.' : '') },
+            { role: 'user', content: searchContext + message }
+          ],
           model: 'openai'
         })
       });
