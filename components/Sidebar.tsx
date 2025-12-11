@@ -362,7 +362,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <button
                         key={item.id}
                         onClick={() => handleAction(() => onSelectFeature?.(item.id, item.label))}
-                        className="w-full text-left px-2 py-2 text-xs text-[--text-muted] hover:text-[--accent-primary] hover:bg-[--bg-hover] active:bg-[--bg-hover] rounded-md transition-colors truncate touch-manipulation min-h-[36px] flex items-center"
+                        className="w-full text-left px-2 py-2 text-xs text-[--text-muted] hover:text-[--accent-primary] hover:bg-[--bg-hover] active:bg-[--bg-hover] rounded-md transition-colors truncate touch-manipulation min-h-[44px] flex items-center"
                       >
                         {item.label}
                       </button>

@@ -36,8 +36,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onStopGeneration,
   onToggleArtifacts,
   onOpenSettings,
+
   onOpenNotifications,
-  onOpenProfile
+  onOpenProfile,
+  onClear
 }) => {
   const [inputText, setInputText] = useState('');
   const [showModelSelector, setShowModelSelector] = useState(false);
@@ -217,10 +219,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <div className="flex items-center gap-4">
           {/* Badge Removed per user request */}
           <div className="header-actions flex gap-2">
-            <button className="header-btn w-9 h-9 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors">
+            <button
+              onClick={() => {
+                const text = messages.map(m => `${m.role}: ${m.text}`).join('\n\n');
+                if (navigator.share) {
+                  navigator.share({ title: 'Chat Export', text: text }).catch(() => { });
+                } else {
+                  navigator.clipboard.writeText(text);
+                  // Optional: Show toast "Copied to clipboard"
+                }
+              }}
+              className="header-btn w-9 h-9 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors touch-manipulation"
+              title="Share Chat"
+            >
               <Share size={20} />
             </button>
-            <button className="header-btn w-9 h-9 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors">
+            <button
+              onClick={() => {
+                if (window.confirm('Hapus semua pesan?')) {
+                  onClear();
+                }
+              }}
+              className="header-btn w-9 h-9 flex items-center justify-center rounded-md hover:bg-[--bg-hover] text-[--text-muted] transition-colors touch-manipulation"
+              title="Clear Chat"
+            >
               <Trash2 size={20} />
             </button>
             {/* Redundant settings removed - access via Sidebar */}
