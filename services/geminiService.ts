@@ -139,56 +139,60 @@ export const streamChatResponse = async (
       return true;
     }
 
-    // 1. Client-Side Search (DuckDuckGo) for Vercel
+    // 1. Server-Side Search via API Route (Bypass CORS)
     let searchContext = '';
 
-    // V3 Search Logic: Always search if internet enabled (broaden scope)
+    // V4 Search Logic: Use API route to bypass CORS
     if (isInternetEnabled && message.split(' ').length > 1) {
       try {
-        console.log('[WILI] Searching DuckDuckGo (Client-Side)...');
-        const q = encodeURIComponent(message.replace(/\b(cari|search|info|berita)\b/gi, ''));
-        const ddgUrl = `https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`;
+        console.log('[WILI] Searching via /api/search...');
+        const searchQuery = message.replace(/\b(cari|search|info|berita)\b/gi, '').trim();
 
-        // Try Primary Proxy (corsproxy.io)
-        let ddr = null;
+        // Try Vercel API Route first (bypasses CORS)
+        let searchResults: any[] = [];
         try {
-          const res = await fetch(`https://corsproxy.io/?` + encodeURIComponent(ddgUrl));
-          if (res.ok) ddr = await res.json();
-        } catch (e1) {
-          console.log('Primary Proxy Failed, trying backup...');
+          const apiRes = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: searchQuery, limit: 5 })
+          });
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            if (data.success && data.results?.length > 0) {
+              searchResults = data.results;
+              console.log(`[WILI] ✓ API search returned ${searchResults.length} results`);
+            }
+          }
+        } catch (apiErr) {
+          console.log('[WILI] API search failed, trying Wikipedia fallback...');
         }
 
         // Fallback: Wikipedia API (Guaranteed CORS Support)
-        if (!ddr) {
-          console.log('Switching to Wikipedia Search (CORS Supported)...');
+        if (searchResults.length === 0) {
           try {
+            const q = encodeURIComponent(searchQuery);
             const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*`;
             const wikiRes = await fetch(wikiUrl).then(r => r.json());
             if (wikiRes.query?.search) {
-              ddr = { IsWiki: true, Results: wikiRes.query.search };
+              searchResults = wikiRes.query.search.map((r: any) => ({
+                title: r.title,
+                snippet: r.snippet.replace(/<[^>]*>/g, ''),
+                source: 'Wikipedia'
+              }));
+              console.log(`[WILI] ✓ Wikipedia returned ${searchResults.length} results`);
             }
           } catch (e2) { console.log('Wikipedia failed', e2); }
         }
 
-        if (ddr) {
-          searchContext = `[SYSTEM: GOOGLE SEARCH RESULTS (REAL-TIME)]\n`;
-
-          if (ddr.IsWiki) {
-            ddr.Results.slice(0, 3).forEach((r: any) => {
-              searchContext += `- ${r.title}: ${r.snippet.replace(/<[^>]*>/g, '')}\n`;
-            });
-          } else {
-            if (ddr.Abstract) searchContext += `- ${ddr.Abstract}\n`;
-            if (ddr.RelatedTopics) {
-              ddr.RelatedTopics.slice(0, 4).forEach((t: any) => {
-                if (t.Text && t.FirstURL) searchContext += `- ${t.Text} (${t.FirstURL})\n`;
-              });
-            }
-          }
-          searchContext += `\n[INSTRUCTION: Use the above Google Search information to answer the user's question. Ignore your knowledge cutoff date.]\n\n`;
+        if (searchResults.length > 0) {
+          searchContext = `[SYSTEM: WEB SEARCH RESULTS (REAL-TIME)]\n`;
+          searchResults.slice(0, 4).forEach((r: any) => {
+            searchContext += `- ${r.title}: ${r.snippet || r.Text || ''}\n`;
+          });
+          searchContext += `\n[INSTRUCTION: Use the above search information to answer the user's question.]\n\n`;
         }
       } catch (e) {
-        console.log('[WILI] Client Search Failed', e);
+        console.log('[WILI] Search Failed', e);
       }
     }
 

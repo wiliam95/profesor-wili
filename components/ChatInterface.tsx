@@ -126,69 +126,65 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
     const recognition = new SR();
     recognition.lang = 'id-ID';
-    recognition.interimResults = true;
 
-    // FIX: Disable continuous mode on mobile (prevents double output on Android)
+    // ANDROID FIX V5: More aggressive settings
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    recognition.continuous = !isMobile; // FALSE di Android/iOS
+    recognition.continuous = false; // ALWAYS false to prevent double
+    recognition.interimResults = !isMobile; // Disable interim on mobile
+    recognition.maxAlternatives = 1; // Only 1 result
 
     setIsRecording(true);
     recognitionRef.current = recognition;
 
-    // Store current text to avoid duplication/overwriting issues
-    textBeforeRef.current = inputText + (inputText && !inputText.endsWith(' ') ? ' ' : '');
+    // Store current text
+    const baseText = inputText + (inputText && !inputText.endsWith(' ') ? ' ' : '');
+    textBeforeRef.current = baseText;
 
-    // FIX: Track last final transcript to prevent duplicates
-    let lastFinalTranscript = '';
-    let lastFinalTime = 0;
+    // Global deduplication tracker
+    const sessionId = Date.now();
+    (window as any)._voiceSessionId = sessionId;
+    (window as any)._lastVoiceResult = '';
 
     recognition.onresult = (e: any) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
+      // Check session validity
+      if ((window as any)._voiceSessionId !== sessionId) return;
 
-      for (let i = e.resultIndex; i < e.results.length; ++i) {
-        if (e.results[i].isFinal) {
-          finalTranscript += e.results[i][0].transcript;
-        } else {
-          interimTranscript += e.results[i][0].transcript;
-        }
-      }
+      // Get only the latest result
+      const lastResultIndex = e.results.length - 1;
+      const result = e.results[lastResultIndex];
+      const transcript = result[0].transcript.trim();
 
-      // FIX: Time-based + content-based deduplication
-      const now = Date.now();
-      const cleanFinal = finalTranscript.trim();
-
-      if (cleanFinal) {
-        // Skip if same content AND within 1 second (duplicate event)
-        if (cleanFinal === lastFinalTranscript && (now - lastFinalTime) < 1000) {
-          console.log('[Voice] Skipping duplicate:', cleanFinal);
+      if (result.isFinal) {
+        // ANDROID FIX: Skip if exact same as last result (duplicate event)
+        if (transcript === (window as any)._lastVoiceResult) {
+          console.log('[Voice] Skipping duplicate:', transcript);
           return;
         }
+        (window as any)._lastVoiceResult = transcript;
 
-        // Skip if already exists at end of current text
-        const currentFull = textBeforeRef.current.trim();
-        if (!currentFull.endsWith(cleanFinal)) {
-          textBeforeRef.current += (textBeforeRef.current ? ' ' : '') + cleanFinal;
-          lastFinalTranscript = cleanFinal;
-          lastFinalTime = now;
-        }
+        // Append to base text
+        const newText = textBeforeRef.current + transcript;
+        textBeforeRef.current = newText + ' ';
+        setInputText(newText);
+        console.log('[Voice] Final:', transcript);
+      } else {
+        // Show interim (desktop only)
+        setInputText(textBeforeRef.current + transcript);
       }
-
-      const display = textBeforeRef.current + (interimTranscript ? ' ' + interimTranscript : '');
-      setInputText(display);
     };
 
     recognition.onerror = (event: any) => {
-      console.error("Speech recognition error", event.error);
+      console.error('[Voice] Error:', event.error);
       setIsRecording(false);
-      if (event.error === 'no-speech') {
-        // Don't show alert for no-speech, just stop gracefully
-        console.log('[Voice] No speech detected');
-      }
     };
 
     recognition.onend = () => {
       setIsRecording(false);
+      // Clear session
+      if ((window as any)._voiceSessionId === sessionId) {
+        (window as any)._voiceSessionId = null;
+        (window as any)._lastVoiceResult = '';
+      }
     };
 
     recognition.start();
