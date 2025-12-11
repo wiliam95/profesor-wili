@@ -127,7 +127,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const recognition = new SR();
     recognition.lang = 'id-ID';
     recognition.interimResults = true;
-    recognition.continuous = true; // Enable continuous dictation
+
+    // FIX: Disable continuous mode on mobile (prevents double output on Android)
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    recognition.continuous = !isMobile; // FALSE di Android/iOS
 
     setIsRecording(true);
     recognitionRef.current = recognition;
@@ -135,6 +138,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // Store current text to avoid duplication/overwriting issues
     textBeforeRef.current = inputText + (inputText && !inputText.endsWith(' ') ? ' ' : '');
 
+    // FIX: Track last final transcript to prevent duplicates
+    let lastFinalTranscript = '';
+    let lastFinalTime = 0;
 
     recognition.onresult = (e: any) => {
       let finalTranscript = '';
@@ -148,18 +154,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }
 
-      // Android Fix V3: Time-based Debounce + Strict Dedup
+      // FIX: Time-based + content-based deduplication
       const now = Date.now();
-      if ((window as any)._lastVoiceTime && (now - (window as any)._lastVoiceTime < 500)) {
-        return; // Skip if too fast (duplicate event)
-      }
-      (window as any)._lastVoiceTime = now;
-
       const cleanFinal = finalTranscript.trim();
-      const currentFull = textBeforeRef.current.trim();
 
-      if (cleanFinal && !currentFull.endsWith(cleanFinal)) {
-        textBeforeRef.current += (textBeforeRef.current ? ' ' : '') + cleanFinal;
+      if (cleanFinal) {
+        // Skip if same content AND within 1 second (duplicate event)
+        if (cleanFinal === lastFinalTranscript && (now - lastFinalTime) < 1000) {
+          console.log('[Voice] Skipping duplicate:', cleanFinal);
+          return;
+        }
+
+        // Skip if already exists at end of current text
+        const currentFull = textBeforeRef.current.trim();
+        if (!currentFull.endsWith(cleanFinal)) {
+          textBeforeRef.current += (textBeforeRef.current ? ' ' : '') + cleanFinal;
+          lastFinalTranscript = cleanFinal;
+          lastFinalTime = now;
+        }
       }
 
       const display = textBeforeRef.current + (interimTranscript ? ' ' + interimTranscript : '');
@@ -169,11 +181,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
       setIsRecording(false);
+      if (event.error === 'no-speech') {
+        // Don't show alert for no-speech, just stop gracefully
+        console.log('[Voice] No speech detected');
+      }
     };
 
     recognition.onend = () => {
       setIsRecording(false);
-      // Optional: Auto-restart if we wanted truly continuous, but for now let's stop to be safe
     };
 
     recognition.start();

@@ -1026,3 +1026,179 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* =====================================================
+   MOBILE RESPONSIVE FIXES (Android + iOS)
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+  /* Chat area */
+  .chat-area {
+    padding: 0;
+  }
+
+  /* Messages */
+  .messages-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .messages-wrapper {
+    max-width: 100% !important;
+    padding: 0;
+  }
+
+  /* Input Area */
+  .chat-input-area {
+    padding: 0.75rem 0.5rem;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .chat-input-box {
+    padding: 0.75rem;
+  }
+
+  /* Dashboard padding fix */
+  .p-10,
+  .p-8 {
+    padding: 1rem !important;
+  }
+
+  .p-6 {
+    padding: 0.75rem !important;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  /* Model display */
+  .model-display {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Message bubbles */
+  .message-bubble {
+    max-width: 88% !important;
+    font-size: 0.9375rem;
+  }
+
+  /* Header */
+  .chat-header {
+    padding: 0.75rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .chat-title {
+    font-size: 1rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Voice/Send buttons */
+  .input-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 2.25rem;
+  }
+
+  .send-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+  }
+
+  /* Grid fixes */
+  .grid-cols-2,
+  .grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+
+  /* Extra small screens */
+  .messages-container {
+    padding: 0.75rem 0.25rem;
+  }
+
+  .message-bubble {
+    font-size: 0.875rem;
+    padding: 0.625rem 0.75rem;
+    max-width: 92% !important;
+  }
+
+  .chat-input-box {
+    padding: 0.5rem;
+    border-radius: 1rem;
+  }
+
+  .chat-textarea {
+    font-size: 14px;
+  }
+
+  /* Compact header */
+  .chat-header {
+    padding: 0.5rem 0.75rem;
+    height: auto;
+    min-height: 48px;
+  }
+
+  .header-actions {
+    gap: 0.25rem;
+  }
+
+  .header-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* iOS Safari Safe Area */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .chat-input-area {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .app-layout {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Android Chrome Address Bar Fix */
+@supports (-webkit-overflow-scrolling: touch) {
+  .app-layout {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+
+  .messages-container {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Touch-friendly tap targets */
+@media (hover: none) and (pointer: coarse) {
+
+  .input-btn,
+  .header-btn,
+  .action-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .chat-item {
+    min-height: 48px;
+  }
+
+  .new-chat-btn {
+    min-height: 48px;
+  }
+}

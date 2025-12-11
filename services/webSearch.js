@@ -11,6 +11,28 @@ export async function searchWeb(query, limit = 5) {
     let source = '';
 
     // ============================================
+    // TIER 0: Vercel API Route (Bypass CORS)
+    // ============================================
+    try {
+        console.log('[WebSearch] Trying Vercel API route...');
+        const apiResponse = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, limit })
+        });
+
+        if (apiResponse.ok) {
+            const data = await apiResponse.json();
+            if (data.success && data.results?.length > 0) {
+                console.log(`[WebSearch] ✓ API route returned ${data.results.length} results`);
+                return data.results.slice(0, limit);
+            }
+        }
+    } catch (apiError) {
+        console.log('[WebSearch] API route unavailable, trying client-side...', apiError.message);
+    }
+
+    // ============================================
     // TIER 1: Google Custom Search (Most Reliable)
     // ============================================
     try {
