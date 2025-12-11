@@ -171,7 +171,7 @@ export const streamChatResponse = async (
         }
 
         if (ddr) {
-          searchContext = `[SYSTEM: REAL-TIME WEB SEARCH RESULTS]\n`;
+          searchContext = `[SYSTEM: GOOGLE SEARCH RESULTS (REAL-TIME)]\n`;
 
           if (ddr.IsWiki) {
             ddr.Results.slice(0, 3).forEach((r: any) => {
@@ -185,24 +185,31 @@ export const streamChatResponse = async (
               });
             }
           }
-          searchContext += `\n[INSTRUCTION: Use the above real-time information to answer the user's question. Ignore your knowledge cutoff date.]\n\n`;
+          searchContext += `\n[INSTRUCTION: Use the above Google Search information to answer the user's question. Ignore your knowledge cutoff date.]\n\n`;
         }
       } catch (e) {
         console.log('[WILI] Client Search Failed', e);
       }
     }
 
-    try {
-      // Prompt Injection Strategy: Put context in USER message for higher attention
-      const finalPrompt = searchContext ? (searchContext + message) : message;
+    // 4. Memory Injection: Construct full message history
+    const conversation = history.map(h => ({
+      role: h.role === Role.USER ? 'user' : 'assistant',
+      content: h.text
+    }));
 
+    // Add current search context + user message
+    const finalPrompt = searchContext ? (searchContext + message) : message;
+    conversation.push({ role: 'user', content: finalPrompt });
+
+    try {
       const response = await fetch('https://text.pollinations.ai/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'You are Wili, a helpful AI assistant with real-time web access. Always use provided search results to answer securely.' },
-            { role: 'user', content: finalPrompt }
+            { role: 'system', content: 'You are Wili, a helpful AI assistant. You have access to real-time Google Search results provided in the system prompt. Always use them to answer.' },
+            ...conversation
           ],
           model: 'openai'
         })

@@ -271,10 +271,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="px-4 pt-4">
         <button
           onClick={() => handleAction(onNewChat)}
-          className="new-chat-btn w-full h-11 flex items-center justify-center gap-2 bg-[--accent-primary] hover:bg-[--accent-hover] text-white rounded-lg font-medium transition-all active:scale-[0.98]"
+          className="new-chat-btn w-full h-12 flex items-center justify-center gap-2 bg-[--accent-primary] hover:bg-[--accent-hover] text-white rounded-xl font-bold shadow-sm transition-all active:scale-[0.98] mb-2"
         >
-          <Plus size={20} />
-          <span>Chat Baru</span>
+          <Plus size={20} className="stroke-[3]" />
+          <span>CHAT BARU</span>
         </button>
       </div>
 

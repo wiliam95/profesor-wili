@@ -12,11 +12,14 @@
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
+    "eslint": "^9.39.1",
+    "glob": "^13.0.0",
     "lucide-react": "^0.555.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.0",
+    "rimraf": "^6.1.2",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
@@ -28,7 +31,6 @@
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.49.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "typescript": "~5.8.2",
