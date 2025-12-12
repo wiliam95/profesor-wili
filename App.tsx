@@ -1234,6 +1234,34 @@ To enable real AI responses:
             onCreateArtifact={() => { setActiveView('chat'); handleSendMessage('Buatkan saya artifact baru', []); }}
           />
         );
+      case 'analytics':
+        return (
+          <div className="p-4 md:p-10 text-slate-400 overflow-y-auto h-full bg-[#0F0F0F]">
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-2xl font-bold mb-4 text-white">Analytics Dashboard</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Stats Cards */}
+                <div className="bg-[#1A1A1A] p-6 rounded-xl border border-[#333]">
+                  <h3 className="text-gray-400 text-sm mb-2">Total Chats</h3>
+                  <p className="text-3xl font-bold text-white">{chatSessions.length}</p>
+                </div>
+                <div className="bg-[#1A1A1A] p-6 rounded-xl border border-[#333]">
+                  <h3 className="text-gray-400 text-sm mb-2">Total Artifacts</h3>
+                  <p className="text-3xl font-bold text-white">{artifacts.length}</p>
+                </div>
+                <div className="bg-[#1A1A1A] p-6 rounded-xl border border-[#333]">
+                  <h3 className="text-gray-400 text-sm mb-2">Messages</h3>
+                  <p className="text-3xl font-bold text-white">{messages.length}</p>
+                </div>
+              </div>
+
+              <div className="mt-8 bg-[#1A1A1A] p-6 rounded-xl border border-[#333]">
+                <h3 className="text-white text-lg font-bold mb-4">Recent Activity</h3>
+                <div className="text-sm text-gray-500">No recent activity data available.</div>
+              </div>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -1266,8 +1294,16 @@ To enable real AI responses:
           </div>
         </div>
 
-        {/* DESKTOP SIDE PANEL (Static Split - 30%) */}
-        <div className={`hidden lg:block transition-all duration-300 ease-in-out border-l border-[#e5e5e5] bg-[#fbfbfa] ${isPanelOpen ? 'w-[35%] min-w-[420px]' : 'w-0 border-none overflow-hidden'}`}>
+        {/* UNIFIED PANEL - WORKS ON ALL DEVICES (Fix 1) */}
+        <div className={`
+          ${isPanelOpen ? 'block' : 'hidden'}
+          fixed lg:relative
+          inset-0 lg:inset-auto
+          z-50 lg:z-auto
+          lg:w-[35%] lg:min-w-[420px]
+          bg-white
+          transition-all duration-300
+        `}>
           <ArtifactsPanel
             isOpen={isPanelOpen}
             onClose={closePanel}
@@ -1276,22 +1312,17 @@ To enable real AI responses:
             selectedArtifact={selectedArtifact}
             onSelectArtifact={selectArtifact}
             onUpdateArtifact={updateArtifact}
-            isFixed={false} // Embedded mode
+            isFixed={true} // Unified mode for mobile/desktop handling
           />
         </div>
 
-        {/* MOBILE OVERLAY PANEL (Fixed) */}
-        <div className="lg:hidden">
-          <ArtifactsPanel
-            isOpen={isPanelOpen}
-            onClose={closePanel}
-            onToggle={togglePanel}
-            artifacts={artifacts}
-            selectedArtifact={selectedArtifact}
-            onSelectArtifact={selectArtifact}
-            isFixed={true} // Fixed overlay mode
+        {/* MOBILE BACKDROP */}
+        {isPanelOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={closePanel}
           />
-        </div>
+        )}
 
       </div>
     </Layout>

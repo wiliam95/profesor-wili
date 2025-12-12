@@ -213,8 +213,22 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
             className={`${containerClasses} bg-[--bg-secondary] flex flex-col`}
             style={{ transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden' }}
         >
-            {/* Header - 56px */}
-            <div className="artifacts-header h-14 px-5 flex items-center justify-between border-b border-[--border-subtle]">
+            {/* MOBILE: Close button (Fix 2) */}
+            <div className="lg:hidden flex items-center justify-between p-3 border-b border-[--border-subtle] bg-[--bg-secondary]">
+                <h2 className="text-sm font-semibold text-[--text-primary]">
+                    {selectedArtifact?.title || 'Artifact'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="p-2 hover:bg-[--bg-hover] rounded-lg text-[--text-muted]"
+                    aria-label="Close"
+                >
+                    <X size={20} />
+                </button>
+            </div>
+
+            {/* Header - 56px (Desktop) */}
+            <div className="artifacts-header h-14 px-5 flex items-center justify-between border-b border-[--border-subtle] hidden lg:flex">
                 <div className="flex items-center gap-3 overflow-hidden">
                     <span className="artifacts-title text-sm font-medium text-[--text-primary] truncate">
                         {selectedArtifact?.title || 'Artifact'}

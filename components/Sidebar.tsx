@@ -332,6 +332,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <FolderOpen size={16} />
           <span>Artifacts Space</span>
         </button>
+
+        {/* Analytics Button Fix */}
+        <button
+          onClick={() => handleAction(() => {
+            console.log('[Mobile Debug] Switching to analytics view');
+            onViewChange('analytics');
+          })}
+          className="create-project-btn w-full mt-2 px-3 py-2 flex items-center gap-2 border border-[--border-primary] rounded-md text-sm text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary] hover:border-[--bg-hover] transition-colors"
+        >
+          <span className="flex items-center justify-center w-4 h-4">📊</span>
+          <span>Analytics Dashboard</span>
+        </button>
       </div>
 
       {/* ===== FEATURES SECTION (Dashboard) - ALWAYS VISIBLE ===== */}

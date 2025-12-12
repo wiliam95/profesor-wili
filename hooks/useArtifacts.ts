@@ -98,23 +98,33 @@ export function useArtifacts() {
         setIsPanelOpen(false);
     }, []);
 
-    // Extract artifact from message content
     const extractArtifactFromMessage = useCallback((content: string): Partial<Artifact> | null => {
-        // Match code blocks
-        const codeBlockMatch = content.match(/```(\w+)?\n([\s\S]*?)```/);
-        if (codeBlockMatch) {
-            const language = codeBlockMatch[1] || 'text';
-            const code = codeBlockMatch[2];
+        console.log('[Artifact Extract] Processing message length:', content.length);
 
-            // Auto-trigger for content > 4 lines (More responsive)
-            const lineCount = code.split('\n').length;
-            if (lineCount > 4 || language === 'html' || language === 'svg' || language === 'react' || language === 'tsx' || language === 'jsx' || language === 'javascript' || language === 'js') {
+        // Force detect code blocks for mobile with robust regex
+        const codeBlockRegex = /```(\w+)?\n([\s\S]+?)```/;
+        const match = content.match(codeBlockRegex);
+
+        if (match) {
+            const language = match[1] || 'text';
+            const code = match[2];
+
+            console.log('[Artifact Extract] Found code block:', { language, codeLength: code.length });
+
+            // Accept almost anything that looks like code? 
+            // Or stick to known types but be generous
+            if (code.length > 20 || ['html', 'react', 'tsx', 'jsx', 'js', 'javascript', 'svg'].includes(language)) {
                 let type: Artifact['type'] = 'code';
                 if (language === 'html') type = 'html';
                 else if (language === 'svg') type = 'svg';
-                else if (language === 'react' || language === 'tsx' || language === 'jsx') type = 'react';
+                else if (['react', 'tsx', 'jsx'].includes(language)) type = 'react';
 
-                return { type, content: code, language, title: `${language} snippet` };
+                return {
+                    type,
+                    content: code.trim(),
+                    language: language,
+                    title: `${language} snippet`
+                };
             }
         }
         return null;
