@@ -1,0 +1,487 @@
+/* ============================================================================
+   CLAUDE AI ARTIFACTS STYLING - December 2025
+   Based on research from claude.ai official artifacts feature
+   ============================================================================ */
+
+/* =========================
+   1. ARTIFACTS PANEL - CLAUDE STYLE
+   ========================= */
+
+.artifacts-panel-claude {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    background: #FFFFFF;
+    border-left: 1px solid #E5E7EB;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .artifacts-panel-claude {
+        background: #1A1A1A;
+        border-left-color: #333333;
+    }
+}
+
+/* Header styling */
+.artifacts-panel-claude .artifacts-header {
+    background: #FFFFFF;
+    border-bottom: 1px solid #E5E7EB;
+    padding: 12px 16px;
+    min-height: 56px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .artifacts-panel-claude .artifacts-header {
+        background: #1A1A1A;
+        border-bottom-color: #333333;
+    }
+}
+
+/* Tab styling - Claudestyle orange accent */
+.artifacts-panel-claude .artifacts-tabs {
+    background: #F9FAFB;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.artifacts-panel-claude .artifacts-tab {
+    color: #6B7280;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.artifacts-panel-claude .artifacts-tab:hover {
+    color: #111827;
+    background: #F3F4F6;
+}
+
+.artifacts-panel-claude .artifacts-tab.active {
+    color: #EA580C;
+    /* Claude orange */
+    background: #FFFFFF;
+}
+
+.artifacts-panel-claude .artifacts-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #EA580C;
+}
+
+@media (prefers-color-scheme: dark) {
+    .artifacts-panel-claude .artifacts-tabs {
+        background: #0F0F0F;
+        border-bottom-color: #333333;
+    }
+
+    .artifacts-panel-claude .artifacts-tab {
+        color: #9CA3AF;
+    }
+
+    .artifacts-panel-claude .artifacts-tab:hover {
+        color: #F3F4F6;
+        background: #262626;
+    }
+
+    .artifacts-panel-claude .artifacts-tab.active {
+        background: #1A1A1A;
+    }
+}
+
+/* Empty state */
+.artifacts-panel-claude .empty-state {
+    color: #9CA3AF;
+    padding: 48px 24px;
+}
+
+.artifacts-panel-claude .empty-state-icon {
+    width: 64px;
+    height: 64px;
+    background: #F3F4F6;
+    border-radius: 16px;
+    margin: 0 auto 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .artifacts-panel-claude .empty-state-icon {
+        background: #262626;
+    }
+}
+
+/* Code view styling */
+.artifacts-panel-claude .code-view {
+    background: #1E293B;
+    /* Claude's code background */
+    color: #E2E8F0;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 16px;
+}
+
+/* Preview iframe */
+.artifacts-panel-claude iframe {
+    border: none;
+    width: 100%;
+    height: 100%;
+    background: white;
+}
+
+/* =========================
+   2. LOADING ANIMATION - CLAUDE STYLE
+   ========================= */
+
+.artifacts-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.artifacts-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #F3F4F6;
+    border-top-color: #EA580C;
+    border-radius: 50%;
+    animation: artifacts-spin 0.8s linear infinite;
+}
+
+@keyframes artifacts-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .artifacts-spinner {
+        border-color: #262626;
+        border-top-color: #EA580C;
+    }
+}
+
+/* =========================
+   3. ARTIFACT PREVIEW ENHANCEMENTS
+   ========================= */
+
+.artifact-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Loading overlay */
+.artifact-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+}
+
+.artifact-loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    .artifact-loading-overlay {
+        background: rgba(26, 26, 26, 0.9);
+    }
+}
+
+/* Error state */
+.artifact-error {
+    background: #FEF2F2;
+    color: #B91C1C;
+    padding: 24px;
+    border-radius: 8px;
+    margin: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .artifact-error {
+        background: #450A0A;
+        color: #FCA5A5;
+    }
+}
+
+/* =========================
+   4. RESPONSIVE LAYOUT
+   ========================= */
+
+/* Mobile: Full screen panel */
+@media (max-width: 1023px) {
+    .artifacts-panel-claude[data-mode="mobile"] {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideInFromRight {
+        from {
+            transform: translateX(100%);
+        }
+
+        to {
+            transform: translateX(0);
+        }
+    }
+}
+
+/* Desktop: Side panel */
+@media (min-width: 1024px) {
+    .artifacts-panel-claude[data-mode="desktop"] {
+        width: 35%;
+        min-width: 420px;
+        max-width: 600px;
+        border-left: 1px solid #E5E7EB;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+}
+
+/* =========================
+   5. BUTTON STYLES - CLAUDE DESIGN
+   ========================= */
+
+.claude-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.claude-btn-primary {
+    background: #EA580C;
+    color: white;
+    border-color: #EA580C;
+}
+
+.claude-btn-primary:hover {
+    background: #DC2626;
+    border-color: #DC2626;
+}
+
+.claude-btn-secondary {
+    background: #F3F4F6;
+    color: #374151;
+    border-color: #E5E7EB;
+}
+
+.claude-btn-secondary:hover {
+    background: #E5E7EB;
+}
+
+.claude-btn-ghost {
+    background: transparent;
+    color: #6B7280;
+}
+
+.claude-btn-ghost:hover {
+    background: #F3F4F6;
+    color: #111827;
+}
+
+@media (prefers-color-scheme: dark) {
+    .claude-btn-secondary {
+        background: #262626;
+        color: #E5E7EB;
+        border-color: #333333;
+    }
+
+    .claude-btn-secondary:hover {
+        background: #333333;
+    }
+
+    .claude-btn-ghost:hover {
+        background: #262626;
+        color: #F3F4F6;
+    }
+}
+
+/* =========================
+   6. ICON BUTTONS
+   ========================= */
+
+.claude-icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    color: #6B7280;
+}
+
+.claude-icon-btn:hover {
+    background: #F3F4F6;
+    color: #111827;
+}
+
+.claude-icon-btn:active {
+    transform: scale(0.95);
+}
+
+@media (prefers-color-scheme: dark) {
+    .claude-icon-btn {
+        color: #9CA3AF;
+    }
+
+    .claude-icon-btn:hover {
+        background: #262626;
+        color: #F3F4F6;
+    }
+}
+
+/* =========================
+   7. ARTIFACT LIST/GRID
+   ========================= */
+
+.artifact-card {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.artifact-card:hover {
+    border-color: #EA580C;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.artifact-card.selected {
+    border-color: #EA580C;
+    background: #FFF7ED;
+}
+
+@media (prefers-color-scheme: dark) {
+    .artifact-card {
+        background: #1A1A1A;
+        border-color: #333333;
+    }
+
+    .artifact-card:hover {
+        border-color: #EA580C;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    .artifact-card.selected {
+        background: #2D1B0F;
+    }
+}
+
+/* =========================
+   8. SMOOTH TRANSITIONS
+   ========================= */
+
+.artifact-transition {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+}
+
+/* =========================
+   9. ACCESSIBILITY
+   ========================= */
+
+.claude-focus-visible:focus-visible {
+    outline: 2px solid #EA580C;
+    outline-offset: 2px;
+}
+
+/* =========================
+   10. UTILITIES
+   ========================= */
+
+.claude-shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.claude-shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.claude-shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+    .claude-shadow-sm {
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .claude-shadow-md {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    .claude-shadow-lg {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* =========================
+   11. SCROLLBAR - CLAUDE STYLE
+   ========================= */
+
+.claude-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.claude-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.claude-scrollbar::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 4px;
+}
+
+.claude-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+}
+
+@media (prefers-color-scheme: dark) {
+    .claude-scrollbar::-webkit-scrollbar-thumb {
+        background: #4B5563;
+    }
+
+    .claude-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #6B7280;
+    }
+}
+
+/* Firefox */
+.claude-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #D1D5DB transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+    .claude-scrollbar {
+        scrollbar-color: #4B5563 transparent;
+    }
+}
