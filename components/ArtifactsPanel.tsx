@@ -209,7 +209,10 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
         : 'artifacts-panel open fixed right-0 top-14 w-full sm:w-[400px] h-[calc(100vh-56px)] border-l border-[--border-primary] z-[150]';
 
     return (
-        <div className={`${containerClasses} bg-[--bg-secondary] flex flex-col`}>
+        <div
+            className={`${containerClasses} bg-[--bg-secondary] flex flex-col`}
+            style={{ transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden' }}
+        >
             {/* Header - 56px */}
             <div className="artifacts-header h-14 px-5 flex items-center justify-between border-b border-[--border-subtle]">
                 <div className="flex items-center gap-3 overflow-hidden">
