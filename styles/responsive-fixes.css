@@ -1,0 +1,258 @@
+/* Responsive Fixes & Enhancements */
+
+/* 1. Mobile Touch Targets (44px Rule) */
+button,
+a,
+input,
+select,
+.clickable {
+    min-height: 44px;
+    /* Essential for mobile touch targets */
+    min-width: 44px;
+    touch-action: manipulation;
+    /* Improves tap delay */
+}
+
+/* 2. Visual Enhancements for Mobile */
+@media (max-width: 768px) {
+
+    /* Increase tap area padding */
+    .p-2 {
+        padding: 0.75rem;
+    }
+
+    /* Prevent iOS zoom on inputs */
+    input[type="text"],
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+
+    /* Safe Area Handling for notch devices */
+    .safe-pb {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .safe-pt {
+        padding-top: env(safe-area-inset-top);
+    }
+}
+
+/* 3. Smooth Scrolling & Behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+.smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* 4. Optimized Animations */
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* 5. Polished Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* 6. Visibility Utilities */
+.hidden-mobile {
+    display: block;
+}
+
+.visible-mobile {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .hidden-mobile {
+        display: none !important;
+    }
+
+    .visible-mobile {
+        display: block !important;
+    }
+}
+
+/* 7. Text Typography */
+.text-balance {
+    text-wrap: balance;
+}
+
+.text-pretty {
+    text-wrap: pretty;
+}
+
+/* 8. Flexbox Layout Utilities */
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flex-start {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* 9. Glassmorphism Effect */
+.glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 10. Z-Index Layering */
+.z-modal {
+    z-index: 9999;
+}
+
+.z-overlay {
+    z-index: 9990;
+}
+
+.z-sidebar {
+    z-index: 50;
+}
+
+.z-header {
+    z-index: 40;
+}
+
+/* 11. Text Truncation */
+.line-clamp-1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 12. Responsive Grid */
+.grid-cols-auto-fit {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* 13. Accessibility Focus */
+:focus-visible {
+    outline: 2px solid var(--accent-primary, #FF6B35);
+    outline-offset: 2px;
+}
+
+/* 14. Responsive Media */
+img,
+video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* 15. Modern Container Queries */
+.container-responsive {
+    container-type: inline-size;
+}
+
+/* 16. Print Optimization */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+}
+
+/* 17. Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* 18. Dark Mode Enhancements */
+.dark body {
+    background-color: #111;
+    color: #eee;
+    color-scheme: dark;
+}
+
+/* 19. Sticky Positioning */
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.sticky-bottom {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+/* 20. iOS Full Height Fix */
+.h-screen-ios {
+    height: 100vh;
+    /* Fallback */
+    height: -webkit-fill-available;
+}

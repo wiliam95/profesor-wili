@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Artifact } from '../types/artifacts';
-import { extractArtifactFromMessage as extractStrategy } from './useArtifactExtraction';
+import { extractArtifactFromMessage as extractStrategy, extractArtifactsFromMessage as extractAllStrategy } from './useArtifactExtraction';
 
 export function useArtifacts() {
     const [artifacts, setArtifacts] = useState<Artifact[]>(() => {
@@ -124,6 +124,11 @@ export function useArtifacts() {
         return null;
     }, []);
 
+    const extractArtifactsFromMessage = useCallback((content: string): Partial<Artifact>[] => {
+        const results = extractAllStrategy(content);
+        return results.filter(r => r.found && r.artifact).map(r => r.artifact!);
+    }, []);
+
     return {
         artifacts,
         selectedArtifact,
@@ -135,7 +140,8 @@ export function useArtifacts() {
         clearArtifacts,
         togglePanel,
         closePanel,
-        extractArtifactFromMessage
+        extractArtifactFromMessage,
+        extractArtifactsFromMessage
     };
 }
 

@@ -6,7 +6,6 @@ import {
 import { View } from '../types';
 import { FEATURE_CATEGORIES } from '../constants';
 
-
 interface ChatHistory {
   id: string;
   title: string;
@@ -43,17 +42,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [hoveredChatId, setHoveredChatId] = useState<string | null>(null);
 
-  // Feature menu state - Expand all by default
-  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>(() => {
-    const defaults: Record<string, boolean> = {};
-    FEATURE_CATEGORIES.forEach(cat => defaults[cat.id] = true);
-    return defaults;
-  });
+  // Feature menu state - Collapsed by default for better UX
+  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({});
 
   const toggleFeatureCategory = (catId: string) => {
     setExpandedFeatures(prev => ({ ...prev, [catId]: !prev[catId] }));
   };
-
 
   const [collapsedSections, setCollapsedSections] = useState({
     today: false,
@@ -62,19 +56,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     previous30: false,
   });
 
-  // Load chat history from localStorage
+  // Load chat history
   useEffect(() => {
     const loadHistory = () => {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-
         if (!raw) {
           setChatHistory([]);
           return;
         }
 
         const sessions = JSON.parse(raw);
-
         if (!Array.isArray(sessions) || sessions.length === 0) {
           setChatHistory([]);
           return;
@@ -193,7 +185,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {chat.title}
         </span>
 
-        {/* Show actions on hover */}
         {isHovered && (
           <div className="chat-item-actions flex gap-1">
             <button
@@ -205,7 +196,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Show pin if pinned */}
         {chat.isPinned && !isHovered && (
           <Star size={12} className="text-[--accent-primary] flex-shrink-0" fill="currentColor" />
         )}
@@ -251,8 +241,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const SidebarContent = () => (
     <div className="sidebar flex flex-col h-full bg-[--bg-primary] text-[--text-primary] border-r border-[--border-primary]">
 
-      {/* ===== HEADER - Logo ===== */}
-      <div className="sidebar-header h-14 px-4 flex items-center justify-between border-b border-[--border-subtle]">
+      {/* HEADER - Logo */}
+      <div className="sidebar-header h-14 px-4 flex items-center justify-between border-b border-[--border-subtle] flex-shrink-0">
         <div className="logo flex items-center gap-2">
           <div className="logo-icon w-7 h-7 bg-[--accent-primary] rounded-md flex items-center justify-center text-white text-base font-bold">
             W
@@ -267,8 +257,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* ===== NEW CHAT BUTTON ===== */}
-      <div className="px-4 pt-4">
+      {/* NEW CHAT BUTTON */}
+      <div className="px-4 pt-4 flex-shrink-0">
         <button
           onClick={() => handleAction(onNewChat)}
           className="new-chat-btn w-full h-12 flex items-center justify-center gap-2 bg-[--accent-primary] hover:bg-[--accent-hover] text-white rounded-xl font-bold shadow-sm transition-all active:scale-[0.98] mb-2"
@@ -278,141 +268,145 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* ===== HISTORY SECTIONS (Conditional) ===== */}
-      <div className="history-sections flex-1 overflow-y-auto py-4">
+      {/* SCROLLABLE CONTENT AREA */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+
+        {/* HISTORY SECTIONS */}
         {hasHistory && (
-          <>
+          <div className="py-4">
             <HistorySection title="HARI INI" chats={groupedChats.today} sectionKey="today" />
             <HistorySection title="KEMARIN" chats={groupedChats.yesterday} sectionKey="yesterday" />
             <HistorySection title="7 HARI TERAKHIR" chats={groupedChats.previous7} sectionKey="previous7" />
             <HistorySection title="30 HARI TERAKHIR" chats={groupedChats.previous30} sectionKey="previous30" />
-          </>
+          </div>
         )}
-        {/* Empty = just empty space, no placeholder */}
-      </div>
 
-      {/* ===== PROJECTS SECTION (Always Visible) ===== */}
-      <div className="projects-section px-4 py-3 border-t border-[--border-subtle]">
-        <div className="section-header-fixed flex items-center gap-1.5 py-2 text-xs font-semibold text-[--text-muted] uppercase tracking-wider">
-          <FolderOpen size={14} />
-          <span>PROYEK</span>
-        </div>
+        {/* DASHBOARD FITUR - IMPROVED MOBILE/DESKTOP */}
+        <div className="dashboard-section px-4 py-3 border-t border-[--border-subtle]">
+          <div className="section-header-fixed flex items-center gap-1.5 py-2 mb-2 text-xs font-semibold text-[--text-muted] uppercase tracking-wider">
+            <span>🎯 DASHBOARD FITUR</span>
+            <span className="ml-auto text-[10px] bg-orange-500/20 text-orange-600 px-2 py-0.5 rounded-full font-bold">
+              1000+ Fitur
+            </span>
+          </div>
 
-        {/* Project Items */}
-        {projects.length > 0 && (
-          <div className="projects-list mb-2">
-            {projects.map(project => (
-              <div
-                key={project.id}
-                className="project-item flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[--bg-hover] cursor-pointer transition-colors"
-              >
-                <FolderOpen size={16} className="text-[--accent-primary] flex-shrink-0" />
-                <div className="project-info flex-1 min-w-0">
-                  <div className="project-name text-sm text-[--text-primary] truncate">{project.name}</div>
-                  <div className="project-meta text-xs text-[--text-muted]">{project.chatCount} chats</div>
+          {/* FEATURES LIST - OPTIMIZED FOR ALL DEVICES */}
+          <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            {FEATURE_CATEGORIES.map(cat => {
+              const isExpanded = expandedFeatures[cat.id];
+              return (
+                <div key={cat.id} className="feature-category">
+                  <button
+                    onClick={() => toggleFeatureCategory(cat.id)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-[--text-secondary] hover:text-[--text-primary] hover:bg-[--bg-hover] active:bg-[--bg-hover] rounded-md transition-all touch-manipulation min-h-[44px]"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="text-base flex-shrink-0">{cat.icon}</span>
+                      <span className="font-medium truncate">{cat.label}</span>
+                      <span className="text-xs text-[--text-muted] flex-shrink-0">({cat.items.length})</span>
+                    </div>
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+
+                  {isExpanded && (
+                    <div className="pl-8 mt-1 space-y-0.5 border-l-2 border-[--border-subtle] ml-4 animate-in slide-in-from-top-2 duration-200">
+                      {cat.items.map(item => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleAction(() => onSelectFeature?.(item.id, item.label))}
+                          className="w-full text-left px-2 py-2 text-xs text-[--text-muted] hover:text-[--accent-primary] hover:bg-[--bg-hover] active:bg-[--bg-hover] rounded-md transition-colors truncate touch-manipulation min-h-[40px] flex items-center"
+                        >
+                          <span className="truncate">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        )}
-
-        {/* Create Project Button */}
-        <button
-          onClick={handleCreateProject}
-          className="create-project-btn w-full px-3 py-2 flex items-center gap-2 border border-[--border-primary] rounded-md text-sm text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary] hover:border-[--bg-hover] transition-colors"
-        >
-          <Plus size={16} />
-          <span>Buat Proyek</span>
-        </button>
-
-        <button
-          onClick={() => handleAction(() => onViewChange('artifacts'))}
-          className="create-project-btn w-full mt-2 px-3 py-2 flex items-center gap-2 border border-[--border-primary] rounded-md text-sm text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary] hover:border-[--bg-hover] transition-colors"
-        >
-          <FolderOpen size={16} />
-          <span>Artifacts Space</span>
-        </button>
-
-        {/* Analytics Button Fix */}
-        <button
-          onClick={() => handleAction(() => {
-            console.log('[Mobile Debug] Switching to analytics view');
-            onViewChange('analytics');
-          })}
-          className="create-project-btn w-full mt-2 px-3 py-2 flex items-center gap-2 border border-[--border-primary] rounded-md text-sm text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary] hover:border-[--bg-hover] transition-colors"
-        >
-          <span className="flex items-center justify-center w-4 h-4">📊</span>
-          <span>Analytics Dashboard</span>
-        </button>
+        </div>
       </div>
 
-      {/* ===== FEATURES SECTION (Dashboard) - ALWAYS VISIBLE ===== */}
-      <div className="features-section px-4 py-3 border-t border-[--border-subtle] min-h-[150px] overflow-y-auto overflow-x-hidden">
-        <div className="section-header-fixed flex items-center gap-1.5 py-2 text-xs font-semibold text-[--text-muted] uppercase tracking-wider mb-2">
-          <span>🎯 DASHBOARD FITUR</span>
-        </div>
+      {/* FOOTER - FIXED AT BOTTOM */}
+      <div className="sidebar-footer flex-shrink-0 border-t border-[--border-subtle]">
+        {/* PROJECTS SECTION */}
+        <div className="px-4 py-3">
+          <div className="section-header-fixed flex items-center gap-1.5 py-2 text-xs font-semibold text-[--text-muted] uppercase tracking-wider mb-2">
+            <FolderOpen size={14} />
+            <span>PROYEK</span>
+          </div>
 
-        <div className="space-y-1">
-          {FEATURE_CATEGORIES.map(cat => {
-            const isExpanded = expandedFeatures[cat.id];
-            return (
-              <div key={cat.id} className="feature-category">
-                <button
-                  onClick={() => toggleFeatureCategory(cat.id)}
-                  className="w-full flex items-center justify-between px-2 py-2.5 text-sm text-[--text-secondary] hover:text-[--text-primary] hover:bg-[--bg-hover] active:bg-[--bg-hover] rounded-md transition-colors touch-manipulation"
+          {projects.length > 0 && (
+            <div className="projects-list mb-2 space-y-1">
+              {projects.map(project => (
+                <div
+                  key={project.id}
+                  className="project-item flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[--bg-hover] cursor-pointer transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <span>{cat.icon}</span>
-                    <span className="font-medium">{cat.label}</span>
+                  <FolderOpen size={16} className="text-[--accent-primary] flex-shrink-0" />
+                  <div className="project-info flex-1 min-w-0">
+                    <div className="project-name text-sm text-[--text-primary] truncate">{project.name}</div>
+                    <div className="project-meta text-xs text-[--text-muted]">{project.chatCount} chats</div>
                   </div>
-                  <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                </button>
+                </div>
+              ))}
+            </div>
+          )}
 
-                {isExpanded && (
-                  <div className="pl-7 mt-1 space-y-0.5 border-l border-[--border-subtle] ml-4">
-                    {cat.items.map(item => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleAction(() => onSelectFeature?.(item.id, item.label))}
-                        className="w-full text-left px-2 py-2 text-xs text-[--text-muted] hover:text-[--accent-primary] hover:bg-[--bg-hover] active:bg-[--bg-hover] rounded-md transition-colors truncate touch-manipulation min-h-[44px] flex items-center"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <button
+            onClick={handleCreateProject}
+            className="w-full px-3 py-2 flex items-center gap-2 border border-[--border-primary] rounded-md text-sm text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary] hover:border-[--bg-hover] transition-colors min-h-[40px]"
+          >
+            <Plus size={16} />
+            <span>Buat Proyek</span>
+          </button>
+
+          <button
+            onClick={() => handleAction(() => onViewChange('artifacts'))}
+            className="w-full mt-2 px-3 py-2 flex items-center gap-2 border border-[--border-primary] rounded-md text-sm text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary] hover:border-[--bg-hover] transition-colors min-h-[40px]"
+          >
+            <FolderOpen size={16} />
+            <span>Artifacts Space</span>
+          </button>
+
+          <button
+            onClick={() => handleAction(() => onViewChange('analytics'))}
+            className="w-full mt-2 px-3 py-2 flex items-center gap-2 border border-[--border-primary] rounded-md text-sm text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary] hover:border-[--bg-hover] transition-colors min-h-[40px]"
+          >
+            <span className="flex items-center justify-center w-4 h-4">📊</span>
+            <span>Analytics Dashboard</span>
+          </button>
         </div>
-      </div>
 
+        {/* USER FOOTER */}
+        <div className="px-4 py-3 border-t border-[--border-subtle] flex items-center justify-between gap-2">
+          <button
+            onClick={() => handleAction(() => onViewChange('settings'))}
+            className="user-profile flex-1 flex items-center gap-3 p-2 rounded-md hover:bg-[--bg-hover] transition-colors min-h-[44px]"
+          >
+            <div className="user-avatar w-8 h-8 bg-[--accent-primary] rounded-full flex items-center justify-center text-white text-sm font-semibold">
+              W
+            </div>
+          </button>
 
-      {/* ===== FOOTER (Always Visible) ===== */}
-      <div className="sidebar-footer px-4 py-3 border-t border-[--border-subtle] flex items-center justify-between gap-2">
-        <button
-          onClick={() => handleAction(() => onViewChange('settings'))}
-          className="user-profile flex-1 flex items-center gap-3 p-2 rounded-md hover:bg-[--bg-hover] transition-colors"
-        >
-          <div className="user-avatar w-8 h-8 bg-[--accent-primary] rounded-full flex items-center justify-center text-white text-sm font-semibold">
-            W
-          </div>
-          {/* Plan text removed */}
-        </button>
-
-        <button
-          onClick={() => handleAction(() => onViewChange('settings'))}
-          className="settings-btn w-9 h-9 flex items-center justify-center rounded-md text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary] transition-colors"
-        >
-          <Settings size={20} />
-        </button>
+          <button
+            onClick={() => handleAction(() => onViewChange('settings'))}
+            className="settings-btn w-10 h-10 flex items-center justify-center rounded-md text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary] transition-colors"
+          >
+            <Settings size={20} />
+          </button>
+        </div>
       </div>
     </div>
   );
 
   return (
     <>
-      {/* Desktop Sidebar - 260px */}
+      {/* Desktop Sidebar */}
       <div className="hidden md:block w-[260px] h-full flex-shrink-0">
         <SidebarContent />
       </div>
@@ -427,7 +421,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </button>
 
       {/* Mobile Drawer */}
-      {/* Mobile Sidebar with CSS Transition */}
       <div className={`md:hidden fixed inset-0 z-[100] flex pointer-events-none ${mobileMenuOpen ? 'pointer-events-auto' : ''}`}>
         <div
           style={{ transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden' }}

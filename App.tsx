@@ -44,7 +44,7 @@ function App() {
   const {
     artifacts, selectedArtifact, isPanelOpen,
     addArtifact, updateArtifact, selectArtifact,
-    togglePanel, closePanel, extractArtifactFromMessage
+    togglePanel, closePanel, extractArtifactFromMessage, extractArtifactsFromMessage
   } = useArtifacts();
 
   const [currentChatId, setCurrentChatId] = useState<string>('');
@@ -983,6 +983,7 @@ To enable real AI responses:
 
     try {
       let accumalatedText = '';
+      const processedStreamArtifacts = new Set<string>();
       let effectiveSystemInstruction = activePersona.systemInstruction;
       try {
         const { queryDocumentsAdvanced } = await import('./services/memoryService');
@@ -1022,24 +1023,41 @@ To enable real AI responses:
             }
           });
 
-          // Check for artifacts in the accumulated text
-          const foundDetails = extractArtifactFromMessage(accumalatedText);
-          if (foundDetails && foundDetails.content && foundDetails.content.length > 20) {
-            // Avoid adding duplicates or incomplete chunks repeatedly
-            // Simple check: if we already have an artifact with this exact content, don't add
-            // Better: update the existing artifact if it's the same block
-            // For now, we'll simpler logic: if a NEW artifact block finishes closing ``` 
-            // extractArtifactFromMessage parses the FIRST block. behavior might need tuning for multiple blocks.
-            // But useArtifacts likely handles single extraction.
-            // We will try to update if we find one.
-            // Actually, `addArtifact` creates a new ID. We should probably only add it once it's "stable" or update the last one.
-            // For this MVP step, let's just add it if it doesn't exist? 
-            // Or better, let's just pass it to the Artifact Panel to handle?
-            // Re-reading useArtifacts: addArtifact creates NEW. 
-            // We should debounce or check if we are currently "building" an artifact.
-            // For safe implementation in this step, let's just attempt extraction at the END of stream (in the stats callback),
-            // or check if it's a complete block during stream.
-          }
+          // Check for artifacts in the accumulated text (Multiple artifacts)
+          const currentArtifacts = extractArtifactsFromMessage(accumalatedText);
+
+          currentArtifacts.forEach(foundDetails => {
+            if (foundDetails && foundDetails.content && foundDetails.content.length > 20) {
+              // 1. Check if we already processed this in THIS stream
+              if (processedStreamArtifacts.has(foundDetails.content)) return;
+
+              // 2. Check if it exists in HISTORY (stale artifacts array is fine for this)
+              const existsInHistory = artifacts.find(a =>
+                a.content === foundDetails.content ||
+                (Math.abs(a.content.length - foundDetails.content.length) < 5 && a.title === foundDetails.title)
+              );
+
+              if (!existsInHistory) {
+                console.log('[App] ⚡ Auto-detected artifact during stream:', foundDetails.title);
+
+                // Mark as processed
+                processedStreamArtifacts.add(foundDetails.content);
+
+                // Add artifact
+                addArtifact({
+                  type: foundDetails.type || 'code',
+                  title: foundDetails.title || 'Code Snippet',
+                  content: foundDetails.content,
+                  language: foundDetails.language || 'text'
+                });
+
+                // Auto-open panel if not open
+                if (!isPanelOpen) {
+                  togglePanel();
+                }
+              }
+            }
+          });
         },
         (stats, citations) => {
           setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, isStreaming: false, usage: stats, citations } : msg));
@@ -1047,20 +1065,31 @@ To enable real AI responses:
 
 
 
-          // Extract artifact at the end of the stream for stability
-          const finalArtifact = extractArtifactFromMessage(accumalatedText);
-          if (finalArtifact && finalArtifact.content) {
-            // Check if we already have this artifact (simple dedupe by content length/title)
-            const exists = artifacts.find(a => a.content === finalArtifact.content && a.title === finalArtifact.title);
-            if (!exists) {
-              addArtifact({
-                type: finalArtifact.type || 'code',
-                title: finalArtifact.title || 'Code Snippet',
-                content: finalArtifact.content,
-                language: finalArtifact.language || 'text'
-              });
+          // Extract artifacts at the end of the stream for stability (Handle any missed ones)
+          const finalArtifacts = extractArtifactsFromMessage(accumalatedText);
+
+          finalArtifacts.forEach(finalArtifact => {
+            if (finalArtifact && finalArtifact.content && finalArtifact.content.length > 20) {
+              // Check if already processed in stream
+              if (processedStreamArtifacts.has(finalArtifact.content)) return;
+
+              // Check historical duplicates
+              const exists = artifacts.find(a =>
+                a.content === finalArtifact.content ||
+                (Math.abs(a.content.length - finalArtifact.content.length) < 5 && a.title === finalArtifact.title)
+              );
+
+              if (!exists) {
+                processedStreamArtifacts.add(finalArtifact.content);
+                addArtifact({
+                  type: finalArtifact.type || 'code',
+                  title: finalArtifact.title || 'Code Snippet',
+                  content: finalArtifact.content,
+                  language: finalArtifact.language || 'text'
+                });
+              }
             }
-          }
+          });
 
           try {
             const tts = localStorage.getItem('wili.tts.enabled') === 'true';
@@ -1113,6 +1142,7 @@ To enable real AI responses:
     const aiMsgId = uuidv4();
     try {
       let accum = '';
+      const processedStreamArtifacts = new Set<string>();
       await streamChatResponse(
         activeModel,
         isMemoryEnabled ? base : [],
@@ -1130,24 +1160,70 @@ To enable real AI responses:
               return [...prev, { id: aiMsgId, role: Role.MODEL, text: accum, timestamp: Date.now(), isStreaming: true }];
             }
           });
+
+          // Check for artifacts in the accumulated text (Multiple artifacts)
+          const currentArtifacts = extractArtifactsFromMessage(accum);
+
+          currentArtifacts.forEach(foundDetails => {
+            if (foundDetails && foundDetails.content && foundDetails.content.length > 20) {
+              // 1. Check if we already processed this in THIS stream
+              if (processedStreamArtifacts.has(foundDetails.content)) return;
+
+              // 2. Check if it exists in HISTORY
+              const existsInHistory = artifacts.find(a =>
+                a.content === foundDetails.content ||
+                (Math.abs(a.content.length - foundDetails.content.length) < 5 && a.title === foundDetails.title)
+              );
+
+              if (!existsInHistory) {
+                console.log('[App] ⚡ Auto-detected artifact during stream (edit):', foundDetails.title);
+
+                // Mark as processed
+                processedStreamArtifacts.add(foundDetails.content);
+
+                // Add artifact
+                addArtifact({
+                  type: foundDetails.type || 'code',
+                  title: foundDetails.title || 'Generated Artifact',
+                  content: foundDetails.content,
+                  language: foundDetails.language || 'text'
+                });
+
+                // Auto-open panel if not open
+                if (!isPanelOpen) {
+                  togglePanel();
+                }
+              }
+            }
+          });
         },
         (stats, citations) => {
           setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, isStreaming: false, usage: stats, citations } : msg));
           setIsLoading(false);
 
-          // Auto-extract artifacts for edited messages
-          const finalArtifact = extractArtifactFromMessage(accum);
-          if (finalArtifact && finalArtifact.content && finalArtifact.content.length > 20) {
-            const exists = artifacts.find(a => a.content === finalArtifact.content);
-            if (!exists) {
-              addArtifact({
-                type: finalArtifact.type || 'code',
-                title: finalArtifact.title || 'Generated Artifact',
-                content: finalArtifact.content,
-                language: finalArtifact.language
-              });
+          // Auto-extract artifacts for edited messages (Final check)
+          const finalArtifacts = extractArtifactsFromMessage(accum);
+
+          finalArtifacts.forEach(finalArtifact => {
+            if (finalArtifact && finalArtifact.content && finalArtifact.content.length > 20) {
+              if (processedStreamArtifacts.has(finalArtifact.content)) return;
+
+              const exists = artifacts.find(a =>
+                a.content === finalArtifact.content ||
+                (Math.abs(a.content.length - finalArtifact.content.length) < 5 && a.title === finalArtifact.title)
+              );
+
+              if (!exists) {
+                processedStreamArtifacts.add(finalArtifact.content);
+                addArtifact({
+                  type: finalArtifact.type || 'code',
+                  title: finalArtifact.title || 'Generated Artifact',
+                  content: finalArtifact.content,
+                  language: finalArtifact.language
+                });
+              }
             }
-          }
+          });
         },
         () => stopRequested
       );
