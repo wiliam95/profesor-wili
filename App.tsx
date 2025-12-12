@@ -1242,20 +1242,22 @@ To enable real AI responses:
         );
       case 'bot-builder':
         return <BotBuilder currentPersona={activePersona} onUpdatePersona={setActivePersona} />;
-      case 'analytics':
-        return (
-          <div className="p-10 text-slate-400">
-            <div className="text-xl mb-4">Analytics</div>
-            <div className="space-y-2">
-              {(() => { try { const raw = localStorage.getItem('wili.metrics'); const arr = raw ? JSON.parse(raw) : []; return arr; } catch { return []; } })().slice(-50).reverse().map((m: any, i: number) => (
-                <div key={i} className="px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm">
-                  <div className="text-slate-300">{m.model}</div>
-                  <div className="text-slate-500">input {m.input} • output {m.output} • {m.latency}ms</div>
+      /*
+            case 'analytics_debug':
+              return (
+                <div className="p-10 text-slate-400">
+                  <div className="text-xl mb-4">Analytics</div>
+                  <div className="space-y-2">
+                    {(() => { try { const raw = localStorage.getItem('wili.metrics'); const arr = raw ? JSON.parse(raw) : []; return arr; } catch { return []; } })().slice(-50).reverse().map((m: any, i: number) => (
+                      <div key={i} className="px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm">
+                        <div className="text-slate-300">{m.model}</div>
+                        <div className="text-slate-500">input {m.input} • output {m.output} • {m.latency}ms</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        );
+              );
+      */
       case 'settings':
         return (
           <SettingsPanel
