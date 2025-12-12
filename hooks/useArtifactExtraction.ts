@@ -17,8 +17,8 @@ export const extractArtifactsFromMessage = (message: string): ArtifactDetails[] 
     const artifacts: ArtifactDetails[] = [];
 
     // Pattern: Code blocks
-    // Capture language, optional title in comments, and content
-    const codeBlockPattern = /```(\w+)?\s*\n([\s\S]+?)```/g;
+    // Capture language, optional title in comments, and content (relaxed newline check)
+    const codeBlockPattern = /```(\w+)?\s*([\s\S]+?)```/g;
     const matches = [...message.matchAll(codeBlockPattern)];
 
     for (const match of matches) {
