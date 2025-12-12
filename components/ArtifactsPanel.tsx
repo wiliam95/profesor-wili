@@ -80,27 +80,26 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
     const renderPreview = () => {
         if (!selectedArtifact) return null;
 
-        // REACT RUNNER (CDN Injection) - Improved Version 2025
+        // Detect mobile
+        const isMobile = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        // REACT/HTML RUNNER
         if (selectedArtifact.type === 'react' || selectedArtifact.type === 'html') {
             const isReact = selectedArtifact.type === 'react';
 
             // Pre-process React code for iframe execution
             const processReactCode = (code: string) => {
-                // Remove all import statements (single and multi-line)
                 let processed = code.replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"];?/g, '// [Removed Import]');
                 processed = processed.replace(/import\s+['"][^'"]+['"];?/g, '// [Removed Import]');
-
-                // Handle various export patterns
                 processed = processed.replace(/export\s+default\s+function\s+(\w+)/g, 'function $1');
                 processed = processed.replace(/export\s+default\s+(\w+);?/g, 'const App = $1;');
                 processed = processed.replace(/export\s+default\s+\(([^)]*?)\)\s*=>/g, 'const App = ($1) =>');
                 processed = processed.replace(/export\s+const\s+(\w+)/g, 'const $1');
                 processed = processed.replace(/export\s+function\s+(\w+)/g, 'function $1');
-
                 return processed;
             };
 
-            // Generate robust HTML shell
+            // Generate robust HTML shell for iframe
             const srcDoc = `
                 <!DOCTYPE html>
                 <html>
@@ -123,27 +122,22 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
                     <div id="root"></div>
                     <script type="${isReact ? 'text/babel' : 'text/javascript'}">
                         ${isReact ? `
-                            // React Hooks available globally
                             const { useState, useEffect, useRef, useMemo, useCallback, useContext, useReducer } = React;
-                            
                             try {
                                 ${processReactCode(selectedArtifact.content)}
-                                
-                                // Try to render App component
                                 const root = ReactDOM.createRoot(document.getElementById('root'));
                                 if (typeof App !== 'undefined') {
                                     root.render(React.createElement(App));
                                 } else {
-                                    // Look for any capitalized function that could be a component
                                     const componentNames = Object.keys(window).filter(k => /^[A-Z]/.test(k) && typeof window[k] === 'function');
                                     if (componentNames.length > 0) {
                                         root.render(React.createElement(window[componentNames[0]]));
                                     } else {
-                                        document.getElementById('root').innerHTML = '<div class="error-display">No React component found. Make sure you have an "App" function or export default.</div>';
+                                        document.getElementById('root').innerHTML = '<div class="error-display">No React component found.</div>';
                                     }
                                 }
                             } catch (err) {
-                                document.getElementById('root').innerHTML = '<div class="error-display">Runtime Error:\\n' + err.message + '</div>';
+                                document.getElementById('root').innerHTML = '<div class="error-display">Runtime Error: ' + err.message + '</div>';
                                 console.error('[Artifact Preview Error]', err);
                             }
                         ` : selectedArtifact.content}
@@ -152,6 +146,24 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = memo(({
                 </html>
             `;
 
+            // MOBILE: Direct code display (no iframe - avoids blocking)
+            if (isMobile) {
+                return (
+                    <div className="w-full h-full overflow-auto bg-white" data-artifact-preview>
+                        <div className="p-4">
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                                <p className="text-blue-800 text-sm font-medium">📱 Mobile Preview Mode</p>
+                                <p className="text-blue-600 text-xs mt-1">Interactive preview is limited on mobile. Code displayed below.</p>
+                            </div>
+                            <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-xs whitespace-pre-wrap break-words">
+                                <code>{selectedArtifact.content}</code>
+                            </pre>
+                        </div>
+                    </div>
+                );
+            }
+
+            // DESKTOP: iframe rendering
             return (
                 <iframe
                     srcDoc={srcDoc}

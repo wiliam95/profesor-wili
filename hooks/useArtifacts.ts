@@ -21,15 +21,31 @@ export function useArtifacts() {
             id: uuidv4(),
             createdAt: Date.now()
         };
+
+        // Mobile detection and logging
+        const isMobile = typeof window !== 'undefined' && /Android|iPhone|iPad/i.test(navigator.userAgent);
+        console.log('[Artifact] Adding new artifact:', {
+            type: newArtifact.type,
+            language: newArtifact.language,
+            contentLength: newArtifact.content?.length,
+            isMobile
+        });
+
         setArtifacts(prev => {
             const updated = [newArtifact, ...prev];
             saveToStorage(updated);
             return updated;
         });
         setSelectedArtifact(newArtifact);
-        setIsPanelOpen(true);
+
+        // MOBILE: Always open panel immediately
+        if (isMobile || !isPanelOpen) {
+            console.log('[Artifact] Opening panel for mobile/closed state');
+            setIsPanelOpen(true);
+        }
+
         return newArtifact;
-    }, [saveToStorage]);
+    }, [saveToStorage, isPanelOpen]);
 
     const updateArtifact = useCallback((id: string, updates: Partial<Artifact>) => {
         setArtifacts(prev => {
