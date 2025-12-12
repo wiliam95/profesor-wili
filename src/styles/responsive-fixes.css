@@ -1,0 +1,59 @@
+/* src/styles/responsive-fixes.css */
+
+/* Mobile Touch Optimization */
+@media (max-width: 768px) {
+
+    button,
+    a,
+    [role="button"] {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+}
+
+/* Scrollbar Styles */
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Artifact Panel Utilities */
+.artifacts-panel-claude {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* GPU Acceleration */
+.gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* Safe Areas */
+@supports (padding: env(safe-area-inset-bottom)) {
+
+    .sidebar-footer,
+    .chat-input-area {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+}

@@ -285,8 +285,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="dashboard-section px-4 py-3 border-t border-[--border-subtle]">
           <div className="section-header-fixed flex items-center gap-1.5 py-2 mb-2 text-xs font-semibold text-[--text-muted] uppercase tracking-wider">
             <span>🎯 DASHBOARD FITUR</span>
-            <span className="ml-auto text-[10px] bg-orange-500/20 text-orange-600 px-2 py-0.5 rounded-full font-bold">
-              1000+ Fitur
+            <span className="ml-auto text-[10px] bg-orange-500/20 text-orange-600 px-2 py-0.5 rounded-full">
+              {FEATURE_CATEGORIES.reduce((sum, cat) => sum + cat.items.length, 0)} Fitur
             </span>
           </div>
 

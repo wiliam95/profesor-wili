@@ -978,13 +978,15 @@ To enable real AI responses:
       return;
     }
     // =====================================================
-    // END MOCK RESPONSE MODE
+    // REAL STREAMING LOGIC (CLAUDE STYLE FIXED)
     // =====================================================
 
     try {
-      let accumalatedText = '';
+      let fullResponseText = '';
+      let ttsAccumulator = '';
       const processedStreamArtifacts = new Set<string>();
       let effectiveSystemInstruction = activePersona.systemInstruction;
+
       try {
         const { queryDocumentsAdvanced } = await import('./services/memoryService');
         const hits = await queryDocumentsAdvanced(text, 3);
@@ -1001,60 +1003,50 @@ To enable real AI responses:
         effectiveSystemInstruction,
         isInternetEnabled,
         (chunk) => {
-          accumalatedText += chunk;
+          fullResponseText += chunk;
+          ttsAccumulator += chunk;
+
+          // TTS Logic - Safe Slicing
           try {
             const tts = localStorage.getItem('wili.tts.enabled') === 'true';
-            if (tts) {
-              if (accumalatedText.length > 160) {
-                const speak = accumalatedText.slice(0, 160);
-                accumalatedText = accumalatedText.slice(160);
-                const u = new SpeechSynthesisUtterance(speak);
-                u.lang = 'id-ID';
-                window.speechSynthesis.speak(u);
-              }
+            if (tts && ttsAccumulator.length > 160) {
+              const speak = ttsAccumulator.slice(0, 160);
+              ttsAccumulator = ttsAccumulator.slice(160);
+              const u = new SpeechSynthesisUtterance(speak);
+              u.lang = 'id-ID';
+              window.speechSynthesis.speak(u);
             }
           } catch { }
+
           setMessages(prev => {
             const last = prev[prev.length - 1];
             if (last && last.id === aiMsgId) {
-              return [...prev.slice(0, -1), { ...last, text: accumalatedText, isStreaming: true }];
+              return [...prev.slice(0, -1), { ...last, text: fullResponseText, isStreaming: true }];
             } else {
-              return [...prev, { id: aiMsgId, role: Role.MODEL, text: accumalatedText, timestamp: Date.now(), isStreaming: true }];
+              return [...prev, { id: aiMsgId, role: Role.MODEL, text: fullResponseText, timestamp: Date.now(), isStreaming: true }];
             }
           });
 
-          // Check for artifacts in the accumulated text (Multiple artifacts)
-          const currentArtifacts = extractArtifactsFromMessage(accumalatedText);
-
+          // ⭐ CLAUDE-STYLE: Artifact Extraction
+          const currentArtifacts = extractArtifactsFromMessage(fullResponseText);
           currentArtifacts.forEach(foundDetails => {
             if (foundDetails && foundDetails.content && foundDetails.content.length > 20) {
-              // 1. Check if we already processed this in THIS stream
               if (processedStreamArtifacts.has(foundDetails.content)) return;
-
-              // 2. Check if it exists in HISTORY (stale artifacts array is fine for this)
               const existsInHistory = artifacts.find(a =>
                 a.content === foundDetails.content ||
                 (Math.abs(a.content.length - foundDetails.content.length) < 5 && a.title === foundDetails.title)
               );
 
               if (!existsInHistory) {
-                console.log('[App] ⚡ Auto-detected artifact during stream:', foundDetails.title);
-
-                // Mark as processed
+                console.log('[App] 🎨 Auto-detected artifact:', foundDetails.title);
                 processedStreamArtifacts.add(foundDetails.content);
-
-                // Add artifact
                 addArtifact({
                   type: foundDetails.type || 'code',
                   title: foundDetails.title || 'Code Snippet',
                   content: foundDetails.content,
                   language: foundDetails.language || 'text'
                 });
-
-                // Auto-open panel if not open
-                if (!isPanelOpen) {
-                  togglePanel();
-                }
+                if (!isPanelOpen) togglePanel();
               }
             }
           });
@@ -1063,22 +1055,15 @@ To enable real AI responses:
           setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, isStreaming: false, usage: stats, citations } : msg));
           setIsLoading(false);
 
-
-
-          // Extract artifacts at the end of the stream for stability (Handle any missed ones)
-          const finalArtifacts = extractArtifactsFromMessage(accumalatedText);
-
+          // Final Check
+          const finalArtifacts = extractArtifactsFromMessage(fullResponseText);
           finalArtifacts.forEach(finalArtifact => {
             if (finalArtifact && finalArtifact.content && finalArtifact.content.length > 20) {
-              // Check if already processed in stream
               if (processedStreamArtifacts.has(finalArtifact.content)) return;
-
-              // Check historical duplicates
               const exists = artifacts.find(a =>
                 a.content === finalArtifact.content ||
                 (Math.abs(a.content.length - finalArtifact.content.length) < 5 && a.title === finalArtifact.title)
               );
-
               if (!exists) {
                 processedStreamArtifacts.add(finalArtifact.content);
                 addArtifact({
@@ -1091,26 +1076,20 @@ To enable real AI responses:
             }
           });
 
+          // Metrics & TTS Flush
           try {
+            // TTS Flush
             const tts = localStorage.getItem('wili.tts.enabled') === 'true';
-            if (tts && accumalatedText) {
-              const u = new SpeechSynthesisUtterance(accumalatedText);
+            if (tts && ttsAccumulator) {
+              const u = new SpeechSynthesisUtterance(ttsAccumulator);
               u.lang = 'id-ID';
-              window.speechSynthesis.cancel();
               window.speechSynthesis.speak(u);
             }
-          } catch { }
-          try {
+
             const name = AI_MODELS.flatMap(g => g.models).find(m => m.id === activeModel)?.name || String(activeModel);
-            const metricsRaw = localStorage.getItem('wili.metrics');
-            const metrics = metricsRaw ? JSON.parse(metricsRaw) : [];
-            metrics.push({ ts: Date.now(), model: name, input: stats.inputTokens, output: stats.outputTokens, latency: stats.latencyMs });
-            localStorage.setItem('wili.metrics', JSON.stringify(metrics));
-            try {
-              import('./services/auditService').then(({ logUsage }) => {
-                logUsage({ ts: Date.now(), provider: 'auto', model: name, input: stats.inputTokens, output: stats.outputTokens, latency: stats.latencyMs });
-              }).catch(() => { });
-            } catch { }
+            import('./services/auditService').then(({ logUsage }) => {
+              logUsage({ ts: Date.now(), provider: 'auto', model: name, input: stats.inputTokens, output: stats.outputTokens, latency: stats.latencyMs });
+            }).catch(() => { });
           } catch { }
         },
         () => stopRequested
@@ -1140,9 +1119,12 @@ To enable real AI responses:
     setStopRequested(false);
     setIsLoading(true);
     const aiMsgId = uuidv4();
+
     try {
-      let accum = '';
+      let fullResponseText = '';
+      let ttsAccumulator = '';
       const processedStreamArtifacts = new Set<string>();
+
       await streamChatResponse(
         activeModel,
         isMemoryEnabled ? base : [],
@@ -1151,48 +1133,46 @@ To enable real AI responses:
         activePersona.systemInstruction,
         isInternetEnabled,
         (chunk) => {
-          accum += chunk;
+          fullResponseText += chunk;
+          ttsAccumulator += chunk;
+
+          try {
+            const tts = localStorage.getItem('wili.tts.enabled') === 'true';
+            if (tts && ttsAccumulator.length > 160) {
+              const speak = ttsAccumulator.slice(0, 160);
+              ttsAccumulator = ttsAccumulator.slice(160);
+              const u = new SpeechSynthesisUtterance(speak);
+              u.lang = 'id-ID';
+              window.speechSynthesis.speak(u);
+            }
+          } catch { }
+
           setMessages(prev => {
             const last = prev[prev.length - 1];
             if (last && last.id === aiMsgId) {
-              return [...prev.slice(0, -1), { ...last, text: accum, isStreaming: true }];
+              return [...prev.slice(0, -1), { ...last, text: fullResponseText, isStreaming: true }];
             } else {
-              return [...prev, { id: aiMsgId, role: Role.MODEL, text: accum, timestamp: Date.now(), isStreaming: true }];
+              return [...prev, { id: aiMsgId, role: Role.MODEL, text: fullResponseText, timestamp: Date.now(), isStreaming: true }];
             }
           });
 
-          // Check for artifacts in the accumulated text (Multiple artifacts)
-          const currentArtifacts = extractArtifactsFromMessage(accum);
-
+          const currentArtifacts = extractArtifactsFromMessage(fullResponseText);
           currentArtifacts.forEach(foundDetails => {
             if (foundDetails && foundDetails.content && foundDetails.content.length > 20) {
-              // 1. Check if we already processed this in THIS stream
               if (processedStreamArtifacts.has(foundDetails.content)) return;
-
-              // 2. Check if it exists in HISTORY
               const existsInHistory = artifacts.find(a =>
                 a.content === foundDetails.content ||
                 (Math.abs(a.content.length - foundDetails.content.length) < 5 && a.title === foundDetails.title)
               );
-
               if (!existsInHistory) {
-                console.log('[App] ⚡ Auto-detected artifact during stream (edit):', foundDetails.title);
-
-                // Mark as processed
                 processedStreamArtifacts.add(foundDetails.content);
-
-                // Add artifact
                 addArtifact({
                   type: foundDetails.type || 'code',
                   title: foundDetails.title || 'Generated Artifact',
                   content: foundDetails.content,
                   language: foundDetails.language || 'text'
                 });
-
-                // Auto-open panel if not open
-                if (!isPanelOpen) {
-                  togglePanel();
-                }
+                if (!isPanelOpen) togglePanel();
               }
             }
           });
@@ -1201,18 +1181,14 @@ To enable real AI responses:
           setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, isStreaming: false, usage: stats, citations } : msg));
           setIsLoading(false);
 
-          // Auto-extract artifacts for edited messages (Final check)
-          const finalArtifacts = extractArtifactsFromMessage(accum);
-
+          const finalArtifacts = extractArtifactsFromMessage(fullResponseText);
           finalArtifacts.forEach(finalArtifact => {
             if (finalArtifact && finalArtifact.content && finalArtifact.content.length > 20) {
               if (processedStreamArtifacts.has(finalArtifact.content)) return;
-
               const exists = artifacts.find(a =>
                 a.content === finalArtifact.content ||
                 (Math.abs(a.content.length - finalArtifact.content.length) < 5 && a.title === finalArtifact.title)
               );
-
               if (!exists) {
                 processedStreamArtifacts.add(finalArtifact.content);
                 addArtifact({

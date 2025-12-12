@@ -20,7 +20,7 @@ export function useArtifacts() {
         const newArtifact: Artifact = {
             ...artifact,
             id: uuidv4(),
-            timestamp: Date.now() // Changed from createdAt to timestamp to match type
+            timestamp: Date.now()
         };
 
         // Mobile detection and logging
@@ -126,7 +126,13 @@ export function useArtifacts() {
 
     const extractArtifactsFromMessage = useCallback((content: string): Partial<Artifact>[] => {
         const results = extractAllStrategy(content);
-        return results.filter(r => r.found && r.artifact).map(r => r.artifact!);
+        // Correctly map ArtifactDetails[] to Partial<Artifact>[]
+        return results.map(r => ({
+            type: r.type,
+            title: r.title,
+            language: r.language,
+            content: r.content
+        }));
     }, []);
 
     return {

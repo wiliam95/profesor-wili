@@ -1,49 +1,7 @@
-@import './styles/responsive-fixes.css';
-
 /* ============================================================================
    WILI - RESPONSIVE CSS FIXES
    Add this to src/index.css or create new file: src/styles/responsive.css
    ============================================================================ */
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --bg-tertiary: #f3f4f6;
-    --bg-hover: #f3f4f6;
-    --text-primary: #111827;
-    --text-secondary: #4b5563;
-    --text-muted: #9ca3af;
-    --border-primary: #e5e7eb;
-    --border-subtle: #f3f4f6;
-    --accent-primary: #f97316;
-    --accent-hover: #ea580c;
-    --header-height: 3.5rem;
-    --sidebar-width: 260px;
-    --artifacts-width: 400px;
-
-    /* Transitions */
-    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-
-    /* Radius */
-    --radius-sm: 0.375rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
-
-    /* Spacing */
-    --space-1: 0.25rem;
-    --space-2: 0.5rem;
-    --space-3: 0.75rem;
-    --space-4: 1rem;
-    --space-5: 1.25rem;
-    --space-6: 1.5rem;
-  }
-}
 
 /* =========================
    1. SCROLLBAR STYLING
