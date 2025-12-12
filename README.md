@@ -1,4 +1,4 @@
-# WILI AI Workspace
+# WILI AI
 
 Claude AI-inspired workspace with multiple AI providers (Gemini, OpenRouter, HuggingFace, OpenAI).
 

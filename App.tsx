@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Key, Save } from 'lucide-react';
 import { LoginPanel } from './components/LoginPanel';
 
-import ArtifactsPanel from './components/ArtifactsPanel';
+import ArtifactsPanel from './components/artifacts/ArtifactsPanel';
 import ArtifactsSpace from './components/ArtifactsSpace';
 import { SettingsPanel } from './components/SettingsPanel';
 import useArtifacts from './hooks/useArtifacts';

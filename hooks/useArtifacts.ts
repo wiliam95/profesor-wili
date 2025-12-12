@@ -1,10 +1,11 @@
-// useArtifacts.ts - Artifacts Management Hook
 import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Artifact } from '../components/ArtifactsPanel';
+import { Artifact } from '../types/artifacts';
+import { extractArtifactFromMessage as extractStrategy } from './useArtifactExtraction';
 
 export function useArtifacts() {
     const [artifacts, setArtifacts] = useState<Artifact[]>(() => {
+        if (typeof window === 'undefined') return [];
         const stored = localStorage.getItem('wili_artifacts');
         return stored ? JSON.parse(stored) : [];
     });
@@ -15,11 +16,11 @@ export function useArtifacts() {
         localStorage.setItem('wili_artifacts', JSON.stringify(arts));
     }, []);
 
-    const addArtifact = useCallback((artifact: Omit<Artifact, 'id' | 'createdAt'>) => {
+    const addArtifact = useCallback((artifact: Omit<Artifact, 'id' | 'timestamp'>) => {
         const newArtifact: Artifact = {
             ...artifact,
             id: uuidv4(),
-            createdAt: Date.now()
+            timestamp: Date.now() // Changed from createdAt to timestamp to match type
         };
 
         // Mobile detection and logging
@@ -115,33 +116,10 @@ export function useArtifacts() {
     }, []);
 
     const extractArtifactFromMessage = useCallback((content: string): Partial<Artifact> | null => {
-        console.log('[Artifact Extract] Processing message length:', content.length);
-
-        // Force detect code blocks for mobile with robust regex
-        const codeBlockRegex = /```(\w+)?\n([\s\S]+?)```/;
-        const match = content.match(codeBlockRegex);
-
-        if (match) {
-            const language = match[1] || 'text';
-            const code = match[2];
-
-            console.log('[Artifact Extract] Found code block:', { language, codeLength: code.length });
-
-            // Accept almost anything that looks like code? 
-            // Or stick to known types but be generous
-            if (code.length > 20 || ['html', 'react', 'tsx', 'jsx', 'js', 'javascript', 'svg'].includes(language)) {
-                let type: Artifact['type'] = 'code';
-                if (language === 'html') type = 'html';
-                else if (language === 'svg') type = 'svg';
-                else if (['react', 'tsx', 'jsx'].includes(language)) type = 'react';
-
-                return {
-                    type,
-                    content: code.trim(),
-                    language: language,
-                    title: `${language} snippet`
-                };
-            }
+        const result = extractStrategy(content);
+        if (result.found && result.artifact) {
+            console.log('[Artifact Extract] Found artifact:', result.artifact);
+            return result.artifact;
         }
         return null;
     }, []);

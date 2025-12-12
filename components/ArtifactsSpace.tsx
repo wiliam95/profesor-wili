@@ -1,7 +1,7 @@
 // ArtifactsSpace.tsx - Claude AI Style Artifacts Workspace
 import React, { useState, memo } from 'react';
 import { Search, Grid, List, Filter, Plus, FileText, Code, Image, Trash2, Download, MoreVertical, Clock, Tag } from 'lucide-react';
-import { Artifact } from './ArtifactsPanel';
+import { Artifact } from '../types/artifacts';
 
 interface ArtifactsSpaceProps {
     artifacts: Artifact[];
@@ -22,7 +22,7 @@ export const ArtifactsSpace: React.FC<ArtifactsSpaceProps> = memo(({
         .filter(a => filterType === 'all' || a.type === filterType)
         .filter(a => a.title.toLowerCase().includes(searchQuery.toLowerCase()))
         .sort((a, b) => {
-            if (sortBy === 'date') return b.createdAt - a.createdAt;
+            if (sortBy === 'date') return b.timestamp - a.timestamp;
             if (sortBy === 'name') return a.title.localeCompare(b.title);
             return a.type.localeCompare(b.type);
         });
@@ -91,7 +91,7 @@ export const ArtifactsSpace: React.FC<ArtifactsSpaceProps> = memo(({
                             <div key={artifact.id} onClick={() => onSelectArtifact(artifact)}
                                 className="group bg-slate-800 border border-slate-700 rounded-xl p-4 cursor-pointer hover:border-orange-500/50 hover:bg-slate-800/80 transition-all">
                                 <div className="flex items-start justify-between mb-3">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${artifact.type === 'code' ? 'bg-blue-500/20 text-blue-400' : artifact.type === 'image' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${artifact.type === 'code' ? 'bg-blue-500/20 text-blue-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
                                         {getArtifactIcon(artifact.type)}
                                     </div>
                                     <button onClick={(e) => { e.stopPropagation(); onDeleteArtifact?.(artifact.id); }} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-slate-700 rounded transition-all">
@@ -100,7 +100,7 @@ export const ArtifactsSpace: React.FC<ArtifactsSpaceProps> = memo(({
                                 </div>
                                 <h3 className="font-medium text-slate-200 truncate mb-1">{artifact.title}</h3>
                                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                                    <Clock className="w-3 h-3" /><span>{formatDate(artifact.createdAt)}</span>
+                                    <Clock className="w-3 h-3" /><span>{formatDate(artifact.timestamp)}</span>
                                 </div>
                             </div>
                         ))}
@@ -115,7 +115,7 @@ export const ArtifactsSpace: React.FC<ArtifactsSpaceProps> = memo(({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-medium text-slate-200 truncate">{artifact.title}</h3>
-                                    <p className="text-xs text-slate-500">{artifact.type} • {formatDate(artifact.createdAt)}</p>
+                                    <p className="text-xs text-slate-500">{artifact.type} • {formatDate(artifact.timestamp)}</p>
                                 </div>
                                 <button onClick={(e) => { e.stopPropagation(); onDeleteArtifact?.(artifact.id); }} className="p-2 opacity-0 group-hover:opacity-100 hover:bg-slate-700 rounded-lg transition-all">
                                     <Trash2 className="w-4 h-4 text-slate-500" />

@@ -1366,3 +1366,57 @@ body {
     }
   }
 }
+
+
+/* -----------------------------------------------------------
+   CLAUDE-STYLE ARTIFACTS - MOBILE CRITICAL
+   ----------------------------------------------------------- */
+
+/* Ensure full viewport height on mobile */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Mobile artifact fullscreen */
+@media (max-width: 1024px) {
+  /* Artifact overlay covers everything */
+  [data-artifact-panel] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 9999 !important;
+    background: white !important;
+  }
+
+  /* Prevent scroll chaining */
+  [data-artifact-panel] {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Full height preview */
+  [data-artifact-preview] {
+    min-height: 100vh !important;
+    height: 100% !important;
+  }
+}
+
+/* Disable pull-to-refresh on artifact panel */
+@media (max-width: 1024px) {
+  [data-artifact-panel] {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Android Chrome address bar compensation */
+@supports (-webkit-touch-callout: none) and (not (aspect-ratio: 1/1)) {
+  /* iOS Safari specific */
+  @media (max-width: 1024px) {
+    [data-artifact-panel] {
+      height: -webkit-fill-available !important;
+    }
+  }
+}
