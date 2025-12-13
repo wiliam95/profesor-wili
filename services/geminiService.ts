@@ -200,7 +200,7 @@ export const streamChatResponse = async (
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'You are Wili, a helpful AI assistant. You have access to real-time Google Search results provided in the system prompt. Always use them to answer.' },
+            { role: 'system', content: effectiveSystemInstruction || 'You are Wili, a helpful AI assistant.' },
             ...conversation
           ],
           model: 'openai'
