@@ -11,6 +11,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onBack, onShowToas
     const [openrouterKey, setOpenrouterKey] = useState('');
     const [openaiKey, setOpenaiKey] = useState('');
     const [hfToken, setHfToken] = useState('');
+    const [tavilyKey, setTavilyKey] = useState('');
+    const [serperKey, setSerperKey] = useState('');
 
     useEffect(() => {
         try {
@@ -18,6 +20,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onBack, onShowToas
             setOpenrouterKey(localStorage.getItem('OPENROUTER_API_KEY') || '');
             setOpenaiKey(localStorage.getItem('OPENAI_API_KEY') || '');
             setHfToken(localStorage.getItem('HF_TOKEN') || '');
+            setTavilyKey(localStorage.getItem('TAVILY_API_KEY') || '');
+            setSerperKey(localStorage.getItem('SERPER_API_KEY') || '');
         } catch (error) {
             console.error('Failed to load API keys:', error);
         }
@@ -29,6 +33,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onBack, onShowToas
             if (openrouterKey) localStorage.setItem('OPENROUTER_API_KEY', openrouterKey);
             if (openaiKey) localStorage.setItem('OPENAI_API_KEY', openaiKey);
             if (hfToken) localStorage.setItem('HF_TOKEN', hfToken);
+            if (tavilyKey) localStorage.setItem('TAVILY_API_KEY', tavilyKey);
+            if (serperKey) localStorage.setItem('SERPER_API_KEY', serperKey);
 
             onShowToast('Settings saved successfully', 'success');
         } catch (error) {
@@ -118,6 +124,38 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onBack, onShowToas
                                 />
                                 <p className="mt-1 text-xs text-[--text-muted]">
                                     Get your token from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-[--accent-primary] hover:underline">HuggingFace</a>
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-[--text-secondary] mb-2">
+                                    Tavily API Key
+                                </label>
+                                <input
+                                    type="password"
+                                    value={tavilyKey}
+                                    onChange={(e) => setTavilyKey(e.target.value)}
+                                    placeholder="tvly-..."
+                                    className="w-full px-4 py-3 bg-[--bg-tertiary] border border-[--border-primary] rounded-lg text-[--text-primary] placeholder:text-[--text-muted] focus:outline-none focus:border-[--accent-primary] transition-colors"
+                                />
+                                <p className="mt-1 text-xs text-[--text-muted]">
+                                    Get your key from <a href="https://tavily.com/#api" target="_blank" rel="noopener noreferrer" className="text-[--accent-primary] hover:underline">Tavily</a> - Real-time Google Search for AI
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-[--text-secondary] mb-2">
+                                    Serper API Key
+                                </label>
+                                <input
+                                    type="password"
+                                    value={serperKey}
+                                    onChange={(e) => setSerperKey(e.target.value)}
+                                    placeholder="..."
+                                    className="w-full px-4 py-3 bg-[--bg-tertiary] border border-[--border-primary] rounded-lg text-[--text-primary] placeholder:text-[--text-muted] focus:outline-none focus:border-[--accent-primary] transition-colors"
+                                />
+                                <p className="mt-1 text-xs text-[--text-muted]">
+                                    Get your key from <a href="https://serper.dev/api-key" target="_blank" rel="noopener noreferrer" className="text-[--accent-primary] hover:underline">Serper</a> - Google Search API
                                 </p>
                             </div>
                         </div>

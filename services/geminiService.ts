@@ -158,54 +158,26 @@ export const streamChatResponse = async (
     // 1. Server-Side Search via API Route (Bypass CORS)
     let searchContext = '';
 
-    // V4 Search Logic: Use API route to bypass CORS
+    // V5 Search Logic: Smart Router (Tavily → Serper → Wikipedia)
     if (isInternetEnabled && message.split(' ').length > 1) {
       try {
-        console.log('[WILI] Searching via /api/search...');
+        console.log('[WILI] Starting Smart Web Search...');
         const searchQuery = message.replace(/\b(cari|search|info|berita)\b/gi, '').trim();
 
-        // Try Vercel API Route first (bypasses CORS)
-        let searchResults: any[] = [];
-        try {
-          const apiRes = await fetch('/api/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: searchQuery, limit: 5 })
-          });
-          if (apiRes.ok) {
-            const data = await apiRes.json();
-            if (data.success && data.results?.length > 0) {
-              searchResults = data.results;
-              console.log(`[WILI] ✓ API search returned ${searchResults.length} results`);
-            }
-          }
-        } catch (apiErr) {
-          console.log('[WILI] API search failed, trying Wikipedia fallback...');
-        }
+        // Import smart search router
+        const { performWebSearch } = await import('./webSearchService');
 
-        // Fallback: Wikipedia API (Guaranteed CORS Support)
-        if (searchResults.length === 0) {
-          try {
-            const q = encodeURIComponent(searchQuery);
-            const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*`;
-            const wikiRes = await fetch(wikiUrl).then(r => r.json());
-            if (wikiRes.query?.search) {
-              searchResults = wikiRes.query.search.map((r: any) => ({
-                title: r.title,
-                snippet: r.snippet.replace(/<[^>]*>/g, ''),
-                source: 'Wikipedia'
-              }));
-              console.log(`[WILI] ✓ Wikipedia returned ${searchResults.length} results`);
-            }
-          } catch (e2) { console.log('Wikipedia failed', e2); }
-        }
+        // Perform search (auto-detects which service to use)
+        const searchResults = await performWebSearch(searchQuery, 5);
 
         if (searchResults.length > 0) {
           searchContext = `[SYSTEM: WEB SEARCH RESULTS (REAL-TIME)]\n`;
           searchResults.slice(0, 4).forEach((r: any) => {
-            searchContext += `- ${r.title}: ${r.snippet || r.Text || ''}\n`;
+            searchContext += `- ${r.title}: ${r.snippet}\n`;
+            if (r.url) searchContext += `  URL: ${r.url}\n`;
           });
-          searchContext += `\n[INSTRUCTION: Use the above search information to answer the user's question.]\n\n`;
+          searchContext += `\n[INSTRUCTION: Use the above search information to answer the user's question with accurate, up-to-date information.]\n\n`;
+          console.log(`[WILI] ✓ Search returned ${searchResults.length} results`);
         }
       } catch (e) {
         console.log('[WILI] Search Failed', e);
