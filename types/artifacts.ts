@@ -9,6 +9,7 @@ export interface Artifact {
     timestamp: number;
     preview?: string; // For thumbnails
     versions?: any[]; // Keep compatibility if needed
+    raw?: string; // The raw string used to generate this artifact
 }
 
 export interface ArtifactExtractionResult {

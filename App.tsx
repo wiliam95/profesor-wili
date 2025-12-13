@@ -40,12 +40,28 @@ function App() {
   const [activePersona, setActivePersona] = useState<Persona>(DEFAULT_PERSONAS[0]);
   const [toasts, setToasts] = useState<{ id: string; text: string; type: 'success' | 'error' | 'info' }[]>([]);
 
+  // Mobile detection for layout
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Artifacts Management
   const {
     artifacts, selectedArtifact, isPanelOpen,
     addArtifact, updateArtifact, selectArtifact,
-    togglePanel, closePanel, extractArtifactFromMessage
+    togglePanel, closePanel, extractArtifactFromMessage, extractArtifactsFromMessage
   } = useArtifacts();
+
+  // DEBUG: Monitor isPanelOpen state
+  useEffect(() => {
+    console.log('[App.tsx] 🔍 isPanelOpen changed to:', isPanelOpen);
+    console.log('[App.tsx] 📦 Total artifacts:', artifacts.length);
+    console.log('[App.tsx] 🎯 Selected artifact:', selectedArtifact?.title || 'none');
+  }, [isPanelOpen, artifacts.length, selectedArtifact]);
 
   const [currentChatId, setCurrentChatId] = useState<string>('');
 
@@ -978,12 +994,15 @@ To enable real AI responses:
       return;
     }
     // =====================================================
-    // END MOCK RESPONSE MODE
+    // REAL STREAMING LOGIC (CLAUDE STYLE FIXED)
     // =====================================================
 
     try {
-      let accumalatedText = '';
+      let fullResponseText = '';
+      let ttsAccumulator = '';
+      const processedStreamArtifacts = new Set<string>();
       let effectiveSystemInstruction = activePersona.systemInstruction;
+
       try {
         const { queryDocumentsAdvanced } = await import('./services/memoryService');
         const hits = await queryDocumentsAdvanced(text, 3);
@@ -1000,88 +1019,99 @@ To enable real AI responses:
         effectiveSystemInstruction,
         isInternetEnabled,
         (chunk) => {
-          accumalatedText += chunk;
+          fullResponseText += chunk;
+          ttsAccumulator += chunk;
+
+          // TTS Logic - Safe Slicing
           try {
             const tts = localStorage.getItem('wili.tts.enabled') === 'true';
-            if (tts) {
-              if (accumalatedText.length > 160) {
-                const speak = accumalatedText.slice(0, 160);
-                accumalatedText = accumalatedText.slice(160);
-                const u = new SpeechSynthesisUtterance(speak);
-                u.lang = 'id-ID';
-                window.speechSynthesis.speak(u);
-              }
+            if (tts && ttsAccumulator.length > 160) {
+              const speak = ttsAccumulator.slice(0, 160);
+              ttsAccumulator = ttsAccumulator.slice(160);
+              const u = new SpeechSynthesisUtterance(speak);
+              u.lang = 'id-ID';
+              window.speechSynthesis.speak(u);
             }
           } catch { }
-          setMessages(prev => {
-            const last = prev[prev.length - 1];
-            if (last && last.id === aiMsgId) {
-              return [...prev.slice(0, -1), { ...last, text: accumalatedText, isStreaming: true }];
-            } else {
-              return [...prev, { id: aiMsgId, role: Role.MODEL, text: accumalatedText, timestamp: Date.now(), isStreaming: true }];
+
+          // ⭐ CLAUDE-STYLE: Artifact Extraction & Cleanup
+          const currentArtifacts = extractArtifactsFromMessage(fullResponseText);
+          let cleanText = fullResponseText;
+          currentArtifacts.forEach(art => {
+            if (art.raw && art.raw.length > 50) {
+              cleanText = cleanText.replace(art.raw, `\n\n> 📦 **Artifact Generated**: ${art.title}\n`);
             }
           });
 
-          // Check for artifacts in the accumulated text
-          const foundDetails = extractArtifactFromMessage(accumalatedText);
-          if (foundDetails && foundDetails.content && foundDetails.content.length > 20) {
-            // Avoid adding duplicates or incomplete chunks repeatedly
-            // Simple check: if we already have an artifact with this exact content, don't add
-            // Better: update the existing artifact if it's the same block
-            // For now, we'll simpler logic: if a NEW artifact block finishes closing ``` 
-            // extractArtifactFromMessage parses the FIRST block. behavior might need tuning for multiple blocks.
-            // But useArtifacts likely handles single extraction.
-            // We will try to update if we find one.
-            // Actually, `addArtifact` creates a new ID. We should probably only add it once it's "stable" or update the last one.
-            // For this MVP step, let's just add it if it doesn't exist? 
-            // Or better, let's just pass it to the Artifact Panel to handle?
-            // Re-reading useArtifacts: addArtifact creates NEW. 
-            // We should debounce or check if we are currently "building" an artifact.
-            // For safe implementation in this step, let's just attempt extraction at the END of stream (in the stats callback),
-            // or check if it's a complete block during stream.
-          }
+          setMessages(prev => {
+            const last = prev[prev.length - 1];
+            if (last && last.id === aiMsgId) {
+              return [...prev.slice(0, -1), { ...last, text: cleanText, isStreaming: true }];
+            } else {
+              return [...prev, { id: aiMsgId, role: Role.MODEL, text: cleanText, timestamp: Date.now(), isStreaming: true }];
+            }
+          });
+          currentArtifacts.forEach(foundDetails => {
+            if (foundDetails && foundDetails.content && foundDetails.content.length > 20) {
+              if (processedStreamArtifacts.has(foundDetails.content)) return;
+              const existsInHistory = artifacts.find(a =>
+                a.content === foundDetails.content ||
+                (Math.abs(a.content.length - foundDetails.content.length) < 5 && a.title === foundDetails.title)
+              );
+
+              if (!existsInHistory) {
+                console.log('[App] 🎨 Auto-detected artifact:', foundDetails.title);
+                processedStreamArtifacts.add(foundDetails.content);
+                addArtifact({
+                  type: foundDetails.type || 'code',
+                  title: foundDetails.title || 'Code Snippet',
+                  content: foundDetails.content,
+                  language: foundDetails.language || 'text'
+                });
+                // Panel auto-opens via useArtifacts hook
+              }
+            }
+          });
         },
         (stats, citations) => {
           setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, isStreaming: false, usage: stats, citations } : msg));
           setIsLoading(false);
 
-
-
-          // Extract artifact at the end of the stream for stability
-          const finalArtifact = extractArtifactFromMessage(accumalatedText);
-          if (finalArtifact && finalArtifact.content) {
-            // Check if we already have this artifact (simple dedupe by content length/title)
-            const exists = artifacts.find(a => a.content === finalArtifact.content && a.title === finalArtifact.title);
-            if (!exists) {
-              addArtifact({
-                type: finalArtifact.type || 'code',
-                title: finalArtifact.title || 'Code Snippet',
-                content: finalArtifact.content,
-                language: finalArtifact.language || 'text'
-              });
+          // Final Check
+          const finalArtifacts = extractArtifactsFromMessage(fullResponseText);
+          finalArtifacts.forEach(finalArtifact => {
+            if (finalArtifact && finalArtifact.content && finalArtifact.content.length > 20) {
+              if (processedStreamArtifacts.has(finalArtifact.content)) return;
+              const exists = artifacts.find(a =>
+                a.content === finalArtifact.content ||
+                (Math.abs(a.content.length - finalArtifact.content.length) < 5 && a.title === finalArtifact.title)
+              );
+              if (!exists) {
+                processedStreamArtifacts.add(finalArtifact.content);
+                addArtifact({
+                  type: finalArtifact.type || 'code',
+                  title: finalArtifact.title || 'Code Snippet',
+                  content: finalArtifact.content,
+                  language: finalArtifact.language || 'text'
+                });
+              }
             }
-          }
+          });
 
+          // Metrics & TTS Flush
           try {
+            // TTS Flush
             const tts = localStorage.getItem('wili.tts.enabled') === 'true';
-            if (tts && accumalatedText) {
-              const u = new SpeechSynthesisUtterance(accumalatedText);
+            if (tts && ttsAccumulator) {
+              const u = new SpeechSynthesisUtterance(ttsAccumulator);
               u.lang = 'id-ID';
-              window.speechSynthesis.cancel();
               window.speechSynthesis.speak(u);
             }
-          } catch { }
-          try {
+
             const name = AI_MODELS.flatMap(g => g.models).find(m => m.id === activeModel)?.name || String(activeModel);
-            const metricsRaw = localStorage.getItem('wili.metrics');
-            const metrics = metricsRaw ? JSON.parse(metricsRaw) : [];
-            metrics.push({ ts: Date.now(), model: name, input: stats.inputTokens, output: stats.outputTokens, latency: stats.latencyMs });
-            localStorage.setItem('wili.metrics', JSON.stringify(metrics));
-            try {
-              import('./services/auditService').then(({ logUsage }) => {
-                logUsage({ ts: Date.now(), provider: 'auto', model: name, input: stats.inputTokens, output: stats.outputTokens, latency: stats.latencyMs });
-              }).catch(() => { });
-            } catch { }
+            import('./services/auditService').then(({ logUsage }) => {
+              logUsage({ ts: Date.now(), provider: 'auto', model: name, input: stats.inputTokens, output: stats.outputTokens, latency: stats.latencyMs });
+            }).catch(() => { });
           } catch { }
         },
         () => stopRequested
@@ -1111,8 +1141,12 @@ To enable real AI responses:
     setStopRequested(false);
     setIsLoading(true);
     const aiMsgId = uuidv4();
+
     try {
-      let accum = '';
+      let fullResponseText = '';
+      let ttsAccumulator = '';
+      const processedStreamArtifacts = new Set<string>();
+
       await streamChatResponse(
         activeModel,
         isMemoryEnabled ? base : [],
@@ -1121,13 +1155,47 @@ To enable real AI responses:
         activePersona.systemInstruction,
         isInternetEnabled,
         (chunk) => {
-          accum += chunk;
+          fullResponseText += chunk;
+          ttsAccumulator += chunk;
+
+          try {
+            const tts = localStorage.getItem('wili.tts.enabled') === 'true';
+            if (tts && ttsAccumulator.length > 160) {
+              const speak = ttsAccumulator.slice(0, 160);
+              ttsAccumulator = ttsAccumulator.slice(160);
+              const u = new SpeechSynthesisUtterance(speak);
+              u.lang = 'id-ID';
+              window.speechSynthesis.speak(u);
+            }
+          } catch { }
+
           setMessages(prev => {
             const last = prev[prev.length - 1];
             if (last && last.id === aiMsgId) {
-              return [...prev.slice(0, -1), { ...last, text: accum, isStreaming: true }];
+              return [...prev.slice(0, -1), { ...last, text: fullResponseText, isStreaming: true }];
             } else {
-              return [...prev, { id: aiMsgId, role: Role.MODEL, text: accum, timestamp: Date.now(), isStreaming: true }];
+              return [...prev, { id: aiMsgId, role: Role.MODEL, text: fullResponseText, timestamp: Date.now(), isStreaming: true }];
+            }
+          });
+
+          const currentArtifacts = extractArtifactsFromMessage(fullResponseText);
+          currentArtifacts.forEach(foundDetails => {
+            if (foundDetails && foundDetails.content && foundDetails.content.length > 20) {
+              if (processedStreamArtifacts.has(foundDetails.content)) return;
+              const existsInHistory = artifacts.find(a =>
+                a.content === foundDetails.content ||
+                (Math.abs(a.content.length - foundDetails.content.length) < 5 && a.title === foundDetails.title)
+              );
+              if (!existsInHistory) {
+                processedStreamArtifacts.add(foundDetails.content);
+                addArtifact({
+                  type: foundDetails.type || 'code',
+                  title: foundDetails.title || 'Generated Artifact',
+                  content: foundDetails.content,
+                  language: foundDetails.language || 'text'
+                });
+                if (!isPanelOpen) togglePanel();
+              }
             }
           });
         },
@@ -1135,19 +1203,25 @@ To enable real AI responses:
           setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, isStreaming: false, usage: stats, citations } : msg));
           setIsLoading(false);
 
-          // Auto-extract artifacts for edited messages
-          const finalArtifact = extractArtifactFromMessage(accum);
-          if (finalArtifact && finalArtifact.content && finalArtifact.content.length > 20) {
-            const exists = artifacts.find(a => a.content === finalArtifact.content);
-            if (!exists) {
-              addArtifact({
-                type: finalArtifact.type || 'code',
-                title: finalArtifact.title || 'Generated Artifact',
-                content: finalArtifact.content,
-                language: finalArtifact.language
-              });
+          const finalArtifacts = extractArtifactsFromMessage(fullResponseText);
+          finalArtifacts.forEach(finalArtifact => {
+            if (finalArtifact && finalArtifact.content && finalArtifact.content.length > 20) {
+              if (processedStreamArtifacts.has(finalArtifact.content)) return;
+              const exists = artifacts.find(a =>
+                a.content === finalArtifact.content ||
+                (Math.abs(a.content.length - finalArtifact.content.length) < 5 && a.title === finalArtifact.title)
+              );
+              if (!exists) {
+                processedStreamArtifacts.add(finalArtifact.content);
+                addArtifact({
+                  type: finalArtifact.type || 'code',
+                  title: finalArtifact.title || 'Generated Artifact',
+                  content: finalArtifact.content,
+                  language: finalArtifact.language
+                });
+              }
             }
-          }
+          });
         },
         () => stopRequested
       );
@@ -1190,20 +1264,22 @@ To enable real AI responses:
         );
       case 'bot-builder':
         return <BotBuilder currentPersona={activePersona} onUpdatePersona={setActivePersona} />;
-      case 'analytics':
-        return (
-          <div className="p-10 text-slate-400">
-            <div className="text-xl mb-4">Analytics</div>
-            <div className="space-y-2">
-              {(() => { try { const raw = localStorage.getItem('wili.metrics'); const arr = raw ? JSON.parse(raw) : []; return arr; } catch { return []; } })().slice(-50).reverse().map((m: any, i: number) => (
-                <div key={i} className="px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm">
-                  <div className="text-slate-300">{m.model}</div>
-                  <div className="text-slate-500">input {m.input} • output {m.output} • {m.latency}ms</div>
+      /*
+            case 'analytics_debug':
+              return (
+                <div className="p-10 text-slate-400">
+                  <div className="text-xl mb-4">Analytics</div>
+                  <div className="space-y-2">
+                    {(() => { try { const raw = localStorage.getItem('wili.metrics'); const arr = raw ? JSON.parse(raw) : []; return arr; } catch { return []; } })().slice(-50).reverse().map((m: any, i: number) => (
+                      <div key={i} className="px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm">
+                        <div className="text-slate-300">{m.model}</div>
+                        <div className="text-slate-500">input {m.input} • output {m.output} • {m.latency}ms</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        );
+              );
+      */
       case 'settings':
         return (
           <SettingsPanel
@@ -1268,60 +1344,90 @@ To enable real AI responses:
   };
 
   return (
-    <Layout sidebar={
-      <Sidebar
-        activeView={activeView}
-        onViewChange={setActiveView}
-        onNewChat={handleNewChat}
-        onSelectFeature={handleFeatureSelect}
-        onLoadChat={handleLoadChat}
-      />
-    } onQuickAction={handleQuickAction} onToolToggle={handleToolToggle} onRecentFileOpen={handleRecentFileOpen} onPopularCommandSelect={handlePopularCommandSelect}>
-
-      {/* ULTIMATE WORKSPACE SPLIT LAYOUT */}
+    <Layout
+      sidebar={
+        <Sidebar
+          activeView={activeView}
+          onViewChange={setActiveView}
+          onNewChat={handleNewChat}
+          onSelectFeature={handleFeatureSelect}
+          onLoadChat={handleLoadChat}
+        />
+      }
+    >
+      {/* ===== MAIN WORKSPACE (Chat + Artifacts Side-by-Side) ===== */}
       <div className="relative flex h-full w-full overflow-hidden">
 
-        {/* MAIN AREA (Chat/Settings/Builder) */}
-        {/* Flex-1 ensures it takes remaining space. On Desktop with Panel Open, it's 70% */}
-        <div className="flex-1 flex flex-col min-w-0 h-full relative z-10">
+        {/* ===== CHAT AREA (flex-1, takes remaining space) ===== */}
+        <div className={`
+          flex-1 flex flex-col min-w-0 h-full relative z-10
+          ${isPanelOpen && !isMobile ? 'lg:w-[65%]' : 'w-full'}
+        `}>
           {renderContent()}
 
           {/* Toasts Overlay */}
           <div className="absolute top-4 right-4 z-[100] space-y-2 pointer-events-none">
             {toasts.map(t => (
-              <div key={t.id} className={`px-4 py-2 rounded-xl border text-sm shadow-lg pointer-events-auto ${t.type === 'success' ? 'bg-green-500/10 text-green-300 border-green-500/20' : t.type === 'error' ? 'bg-red-500/10 text-red-300 border-red-500/20' : 'bg-slate-800 text-slate-200 border-slate-700'}`}>{t.text}</div>
+              <div
+                key={t.id}
+                className={`
+                  px-4 py-2 rounded-xl border text-sm shadow-lg pointer-events-auto
+                  ${t.type === 'success'
+                    ? 'bg-green-500/10 text-green-300 border-green-500/20'
+                    : t.type === 'error'
+                      ? 'bg-red-500/10 text-red-300 border-red-500/20'
+                      : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] border-[var(--border-primary)]'
+                  }
+                `}
+              >
+                {t.text}
+              </div>
             ))}
           </div>
         </div>
 
-        {/* UNIFIED PANEL - WORKS ON ALL DEVICES (Fix 1) */}
-        <div className={`
-          ${isPanelOpen ? 'block' : 'hidden'}
-          fixed lg:relative
-          inset-0 lg:inset-auto
-          z-50 lg:z-auto
-          lg:w-[35%] lg:min-w-[420px]
-          bg-white
-          transition-all duration-300
-        `}>
-          <ArtifactsPanel
-            isOpen={isPanelOpen}
-            onClose={closePanel}
-            onToggle={togglePanel}
-            artifacts={artifacts}
-            selectedArtifact={selectedArtifact}
-            onSelectArtifact={selectArtifact}
-            onUpdateArtifact={updateArtifact}
-            isFixed={true} // Unified mode for mobile/desktop handling
-          />
-        </div>
-
-        {/* MOBILE BACKDROP */}
+        {/* ===== ARTIFACTS PANEL (35% on desktop, fullscreen on mobile) ===== */}
         {isPanelOpen && (
-          <div
-            className="lg:hidden fixed inset-0 bg-black/50 z-40"
-            onClick={closePanel}
-          />
+          <>
+            {/* Desktop: Side Panel (ALWAYS VISIBLE when isPanelOpen=true) */}
+            <div className={`h-full ${isMobile ? 'hidden' : 'block'}`}>
+              <ArtifactsPanel
+                isOpen={isPanelOpen}
+                onClose={closePanel}
+                onToggle={togglePanel}
+                artifacts={artifacts}
+                selectedArtifact={selectedArtifact}
+                onSelectArtifact={selectArtifact}
+                onUpdateArtifact={updateArtifact}
+                isFixed={false}
+              />
+            </div>
+
+            {/* Mobile: Fullscreen Overlay */}
+            {isMobile && (
+              <div className="fixed inset-0 z-50">
+                {/* Backdrop */}
+                <div
+                  className="absolute inset-0 bg-black/50"
+                  onClick={closePanel}
+                />
+
+                {/* Panel */}
+                <div className="relative h-full">
+                  <ArtifactsPanel
+                    isOpen={isPanelOpen}
+                    onClose={closePanel}
+                    onToggle={togglePanel}
+                    artifacts={artifacts}
+                    selectedArtifact={selectedArtifact}
+                    onSelectArtifact={selectArtifact}
+                    onUpdateArtifact={updateArtifact}
+                    isFixed={true}
+                  />
+                </div>
+              </div>
+            )}
+          </>
         )}
 
       </div>

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Artifact } from '../types/artifacts';
-import { extractArtifactFromMessage as extractStrategy } from './useArtifactExtraction';
+import { extractArtifactFromMessage as extractStrategy, extractArtifactsFromMessage as extractAllStrategy } from './useArtifactExtraction';
 
 export function useArtifacts() {
     const [artifacts, setArtifacts] = useState<Artifact[]>(() => {
@@ -20,7 +20,7 @@ export function useArtifacts() {
         const newArtifact: Artifact = {
             ...artifact,
             id: uuidv4(),
-            timestamp: Date.now() // Changed from createdAt to timestamp to match type
+            timestamp: Date.now()
         };
 
         // Mobile detection and logging
@@ -39,14 +39,13 @@ export function useArtifacts() {
         });
         setSelectedArtifact(newArtifact);
 
-        // MOBILE: Always open panel immediately
-        if (isMobile || !isPanelOpen) {
-            console.log('[Artifact] Opening panel for mobile/closed state');
-            setIsPanelOpen(true);
-        }
+        // CLAUDE AI BEHAVIOR: ALWAYS open panel on artifact creation
+        console.log('[Artifact] 🚀 BEFORE Force opening panel. Current isPanelOpen:', isPanelOpen);
+        setIsPanelOpen(true);
+        console.log('[Artifact] ✅ AFTER setIsPanelOpen(true) called');
 
         return newArtifact;
-    }, [saveToStorage, isPanelOpen]);
+    }, [saveToStorage]);
 
     const updateArtifact = useCallback((id: string, updates: Partial<Artifact>) => {
         setArtifacts(prev => {
@@ -124,6 +123,18 @@ export function useArtifacts() {
         return null;
     }, []);
 
+    const extractArtifactsFromMessage = useCallback((content: string): Partial<Artifact>[] => {
+        const results = extractAllStrategy(content);
+        // Correctly map ArtifactDetails[] to Partial<Artifact>[]
+        return results.map(r => ({
+            type: r.type,
+            title: r.title,
+            language: r.language,
+            content: r.content,
+            raw: r.raw
+        }));
+    }, []);
+
     return {
         artifacts,
         selectedArtifact,
@@ -135,7 +146,8 @@ export function useArtifacts() {
         clearArtifacts,
         togglePanel,
         closePanel,
-        extractArtifactFromMessage
+        extractArtifactFromMessage,
+        extractArtifactsFromMessage
     };
 }
 

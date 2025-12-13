@@ -124,6 +124,22 @@ export const streamChatResponse = async (
   onComplete: (stats: UsageStats, citations?: Citation[]) => void,
   shouldStop?: () => boolean
 ): Promise<void> => {
+  const ARTIFACT_INSTRUCTIONS = `
+  [SYSTEM_NOTE: ARTIFACTS PROTOCOL]
+  When producing substantial code (React components, full HTML pages, SVG, diagrams), you MUST use the following XML format strictly. Do NOT use standard markdown code blocks for these.
+  
+  <antArtifact identifier="unique-id" type="application/vnd.ant.code" language="typescript" title="Filename">
+  ... content ...
+  </antArtifact>
+  
+  Use 'type="application/vnd.ant.mermaid"' for mermaid diagrams.
+  Use 'language="tsx"' for React.
+  This allows the UI to render a Preview panel side-by-side. 
+  For simple snippets, use standard markdown.
+  `;
+
+  const effectiveSystemInstruction = systemInstruction + "\n\n" + ARTIFACT_INSTRUCTIONS;
+
   const chosen = selectModelByTask(modelType, newMessage || history.filter(h => h.role === Role.USER).slice(-1)[0]?.text || '', attachments, isInternetEnabled);
   const serviceType = resolveServiceType(chosen);
 
@@ -318,7 +334,7 @@ export const streamChatResponse = async (
     await streamOpenRouterChat(
       chosen,
       allMessages,
-      systemInstruction,
+      effectiveSystemInstruction,
       onChunk,
       (stats) => onComplete(stats, undefined),
       shouldStop
@@ -344,7 +360,7 @@ export const streamChatResponse = async (
     await streamHFChat(
       chosen,
       allMessages,
-      systemInstruction,
+      effectiveSystemInstruction,
       onChunk,
       (stats) => onComplete(stats, undefined),
       shouldStop
@@ -360,7 +376,7 @@ export const streamChatResponse = async (
     if (newMessage) {
       allMessages.push({ id: Date.now().toString(), role: Role.USER, text: newMessage, timestamp: Date.now() });
     }
-    await streamOpenAIChat(chosen, allMessages, systemInstruction, onChunk, (stats) => onComplete(stats, undefined), shouldStop);
+    await streamOpenAIChat(chosen, allMessages, effectiveSystemInstruction, onChunk, (stats) => onComplete(stats, undefined), shouldStop);
     return true;
   };
 
@@ -390,7 +406,7 @@ export const streamChatResponse = async (
     const pRaw = typeof window !== 'undefined' ? window.localStorage.getItem('wili.gen.top_p') : null;
     const mRaw = typeof window !== 'undefined' ? window.localStorage.getItem('wili.gen.max_tokens') : null;
     const genConfig: any = {
-      systemInstruction: systemInstruction,
+      systemInstruction: effectiveSystemInstruction,
       tools: tools.length > 0 ? tools : undefined,
     };
     if (tRaw) genConfig.temperature = parseFloat(tRaw);

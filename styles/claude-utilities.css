@@ -1,0 +1,302 @@
+/* ============================================================================
+   CLAUDE AI - UTILITY CLASSES
+   Helper classes untuk konsistensi UI
+   ============================================================================ */
+
+/* ===== ICON BUTTONS (Claude Style) ===== */
+.claude-icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.claude-icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.claude-icon-btn:active {
+    transform: scale(0.95);
+}
+
+/* ===== PRIMARY BUTTON (Orange) ===== */
+.claude-btn-primary {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    background: var(--accent-primary);
+    color: white;
+    cursor: pointer;
+}
+
+.claude-btn-primary:hover {
+    background: var(--accent-hover);
+}
+
+.claude-btn-primary:active {
+    transform: scale(0.98);
+}
+
+/* ===== SECONDARY BUTTON (Subtle) ===== */
+.claude-btn-secondary {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-primary);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.claude-btn-secondary:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+}
+
+/* ===== SCROLLBAR (Claude Style) ===== */
+.claude-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.claude-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.claude-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-primary);
+    border-radius: 4px;
+}
+
+.claude-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Firefox scrollbar */
+.claude-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-primary) transparent;
+}
+
+/* ===== CARD (Artifact Card, etc) ===== */
+.claude-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.claude-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.claude-card.selected {
+    border-color: var(--accent-primary);
+    background: var(--accent-subtle);
+}
+
+/* ===== SHADOWS ===== */
+.claude-shadow-sm {
+    box-shadow: var(--shadow-sm);
+}
+
+.claude-shadow-md {
+    box-shadow: var(--shadow-md);
+}
+
+.claude-shadow-lg {
+    box-shadow: var(--shadow-lg);
+}
+
+/* ===== TRANSITIONS ===== */
+.claude-transition {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+}
+
+/* ===== FOCUS VISIBLE (Accessibility) ===== */
+.claude-focus-visible:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* ===== BADGES ===== */
+.claude-badge {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.claude-badge-orange {
+    background: var(--accent-subtle);
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-border);
+}
+
+.claude-badge-gray {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+}
+
+/* ===== LOADING SPINNER (Claude Orange) ===== */
+.claude-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--bg-tertiary);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: claude-spin 0.8s linear infinite;
+}
+
+@keyframes claude-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== TYPING INDICATOR (Chat Loading) ===== */
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+}
+
+.typing-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes typing-bounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ===== FADE IN ANIMATION ===== */
+@keyframes claude-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.claude-fade-in {
+    animation: claude-fade-in 0.3s ease-out;
+}
+
+/* ===== SLIDE IN FROM RIGHT (Artifacts Panel) ===== */
+@keyframes claude-slide-in-right {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+.claude-slide-in-right {
+    animation: claude-slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== MOBILE TOUCH OPTIMIZATION ===== */
+@media (max-width: 1023px) {
+
+    button,
+    a,
+    [role="button"] {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+}
+
+/* ===== SAFE AREA (iPhone Notch Support) ===== */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .safe-pb {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+
+    .safe-pt {
+        padding-top: calc(12px + env(safe-area-inset-top));
+    }
+}
+
+/* ===== SMOOTH SCROLLING ===== */
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* ===== GPU ACCELERATION ===== */
+.gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* ===== PRINT OPTIMIZATION ===== */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+}
+
+/* ===== REDUCED MOTION (Accessibility) ===== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

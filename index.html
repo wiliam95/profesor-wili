@@ -9,20 +9,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Claude</title>
 
-  <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#0F0F0F" />
+  <meta name="theme-color" content="#EA580C" />
 
-  <!-- Favicon - Claude Copper -->
   <link rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23CC785C'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' fill='white' font-family='system-ui' font-weight='600' font-size='16'%3EC%3C/text%3E%3C/svg%3E" />
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23EA580C'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' fill='white' font-family='system-ui' font-weight='600' font-size='16'%3EW%3C/text%3E%3C/svg%3E" />
 
-  <!-- Google Fonts - Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -30,65 +26,72 @@
       theme: {
         extend: {
           colors: {
-            // Claude AI 2025 Exact Colors
             bg: {
-              primary: '#0F0F0F',
-              secondary: '#1A1A1A',
-              tertiary: '#2A2A2A',
-              hover: '#333333',
+              primary: '#FFFFFF',
+              secondary: '#F9FAFB',
+              tertiary: '#F3F4F6',
+              hover: '#E5E7EB',
             },
             text: {
-              primary: '#ECECEC',
-              secondary: '#A0A0A0',
-              muted: '#707070',
+              primary: '#111827',
+              secondary: '#6B7280',
+              muted: '#9CA3AF',
             },
-            // Claude's Signature Copper/Orange
             accent: {
-              DEFAULT: '#CC785C',
-              hover: '#B86850',
-              subtle: 'rgba(204, 120, 92, 0.12)',
+              DEFAULT: '#EA580C',
+              hover: '#DC2626',
+              subtle: '#FFF7ED',
             },
             bubble: {
               user: '#2F2F2F',
               assistant: 'transparent',
             },
             border: {
-              DEFAULT: '#333333',
-              subtle: '#252525',
+              DEFAULT: '#E5E7EB',
+              subtle: '#F3F4F6',
             },
           },
           fontFamily: {
             sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-            mono: ['Monaco', 'Menlo', 'Ubuntu Mono', 'monospace'],
-          },
-          spacing: {
-            'sidebar': '260px',
-            'header': '56px',
-            'artifacts': '400px',
-          },
-          animation: {
-            'fade-in-up': 'fadeInUp 0.2s ease',
-            'slide-in': 'slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          },
-          keyframes: {
-            fadeInUp: {
-              '0%': { opacity: '0', transform: 'translateY(10px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            },
-            slideIn: {
-              '0%': { transform: 'translateX(-100%)' },
-              '100%': { transform: 'translateX(0)' },
-            },
           },
         },
       },
     }
   </script>
 
-  <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="/index.css">
+  <style>
+    :root {
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F9FAFB;
+      --bg-tertiary: #F3F4F6;
+      --bg-hover: #E5E7EB;
+      --text-primary: #111827;
+      --text-secondary: #6B7280;
+      --text-muted: #9CA3AF;
+      --border-primary: #E5E7EB;
+      --border-subtle: #F3F4F6;
+      --accent-primary: #EA580C;
+      --accent-hover: #DC2626;
+      --bubble-user: #2F2F2F;
+    }
 
-  <!-- Import Map for ES Modules -->
+    [data-theme="dark"] {
+      --bg-primary: #0F0F0F;
+      --bg-secondary: #1A1A1A;
+      --bg-tertiary: #2A2A2A;
+      --bg-hover: #333333;
+      --text-primary: #ECECEC;
+      --text-secondary: #A0A0A0;
+      --text-muted: #707070;
+      --border-primary: #333333;
+      --border-subtle: #252525;
+      --bubble-user: #2F2F2F;
+    }
+  </style>
+
+  <link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/styles/claude-artifacts.css">
+
   <script type="importmap">
 {
   "imports": {
@@ -106,7 +109,7 @@
   </script>
 </head>
 
-<body class="bg-bg-primary text-text-primary antialiased">
+<body>
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
