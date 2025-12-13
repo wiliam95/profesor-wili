@@ -114,7 +114,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
 </head>
 <body>
     <div id="root"></div>
-    <script type="text/babel">
+    <script type="text/babel" data-type="module" data-presets="react,typescript">
         const { useState, useEffect, useRef, useMemo, useCallback } = React;
         try {
             ${code}

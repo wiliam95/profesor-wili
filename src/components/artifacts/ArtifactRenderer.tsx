@@ -14,8 +14,8 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact }) 
 
   // Initialize Mermaid
   useEffect(() => {
-    mermaid.initialize({ 
-      startOnLoad: true, 
+    mermaid.initialize({
+      startOnLoad: true,
       theme: 'default',
       securityLevel: 'loose'
     });
@@ -24,7 +24,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact }) 
   // Render berdasarkan type
   useEffect(() => {
     setError(null);
-    
+
     try {
       if (artifact.type === 'html') {
         renderHTML();
@@ -43,10 +43,10 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact }) 
 
   const renderHTML = () => {
     if (!iframeRef.current) return;
-    
+
     const doc = iframeRef.current.contentDocument;
     if (!doc) return;
-    
+
     doc.open();
     doc.write(artifact.content);
     doc.close();
@@ -54,10 +54,10 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact }) 
 
   const renderReact = () => {
     if (!iframeRef.current) return;
-    
+
     const doc = iframeRef.current.contentDocument;
     if (!doc) return;
-    
+
     // Wrapper HTML untuk React component
     const html = `
       <!DOCTYPE html>
@@ -75,7 +75,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact }) 
         </head>
         <body>
           <div id="root"></div>
-          <script type="text/babel">
+          <script type="text/babel" data-type="module" data-presets="react,typescript">
             ${artifact.content}
             
             const container = document.getElementById('root');
@@ -94,7 +94,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact }) 
         </body>
       </html>
     `;
-    
+
     doc.open();
     doc.write(html);
     doc.close();
@@ -102,10 +102,10 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact }) 
 
   const renderSVG = () => {
     if (!iframeRef.current) return;
-    
+
     const doc = iframeRef.current.contentDocument;
     if (!doc) return;
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -120,7 +120,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact }) 
         </body>
       </html>
     `;
-    
+
     doc.open();
     doc.write(html);
     doc.close();
@@ -128,7 +128,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact }) 
 
   const renderMermaid = async () => {
     if (!mermaidRef.current) return;
-    
+
     try {
       mermaidRef.current.innerHTML = artifact.content;
       await mermaid.run({ nodes: [mermaidRef.current] });
