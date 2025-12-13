@@ -16,10 +16,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onBack, onShowToas
 
     useEffect(() => {
         try {
-            setGeminiKey(localStorage.getItem('GEMINI_API_KEY') || '');
-            setOpenrouterKey(localStorage.getItem('OPENROUTER_API_KEY') || '');
-            setOpenaiKey(localStorage.getItem('OPENAI_API_KEY') || '');
-            setHfToken(localStorage.getItem('HF_TOKEN') || '');
+            setGeminiKey(localStorage.getItem('wili.googleKey') || '');
+            setOpenrouterKey(localStorage.getItem('wili.openrouterKey') || '');
+            setOpenaiKey(localStorage.getItem('wili.openaiKey') || '');
+            setHfToken(localStorage.getItem('wili.hfToken') || '');
             setTavilyKey(localStorage.getItem('TAVILY_API_KEY') || '');
             setSerperKey(localStorage.getItem('SERPER_API_KEY') || '');
         } catch (error) {
@@ -29,10 +29,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onBack, onShowToas
 
     const handleSave = () => {
         try {
-            if (geminiKey) localStorage.setItem('GEMINI_API_KEY', geminiKey);
-            if (openrouterKey) localStorage.setItem('OPENROUTER_API_KEY', openrouterKey);
-            if (openaiKey) localStorage.setItem('OPENAI_API_KEY', openaiKey);
-            if (hfToken) localStorage.setItem('HF_TOKEN', hfToken);
+            if (geminiKey) localStorage.setItem('wili.googleKey', geminiKey);
+            if (openrouterKey) localStorage.setItem('wili.openrouterKey', openrouterKey);
+            if (openaiKey) localStorage.setItem('wili.openaiKey', openaiKey);
+            if (hfToken) localStorage.setItem('wili.hfToken', hfToken);
             if (tavilyKey) localStorage.setItem('TAVILY_API_KEY', tavilyKey);
             if (serperKey) localStorage.setItem('SERPER_API_KEY', serperKey);
 
