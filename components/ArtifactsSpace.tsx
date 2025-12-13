@@ -115,7 +115,7 @@ export const ArtifactsSpace: React.FC<ArtifactsSpaceProps> = memo(({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-medium text-slate-200 truncate">{artifact.title}</h3>
-                                    <p className="text-xs text-slate-500">{artifact.type} • {formatDate(artifact.timestamp)}</p>
+                                    <p className="text-xs text-slate-500">{artifact.type} â€¢ {formatDate(artifact.timestamp)}</p>
                                 </div>
                                 <button onClick={(e) => { e.stopPropagation(); onDeleteArtifact?.(artifact.id); }} className="p-2 opacity-0 group-hover:opacity-100 hover:bg-slate-700 rounded-lg transition-all">
                                     <Trash2 className="w-4 h-4 text-slate-500" />

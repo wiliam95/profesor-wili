@@ -40,12 +40,28 @@ function App() {
   const [activePersona, setActivePersona] = useState<Persona>(DEFAULT_PERSONAS[0]);
   const [toasts, setToasts] = useState<{ id: string; text: string; type: 'success' | 'error' | 'info' }[]>([]);
 
+  // Mobile detection for layout
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Artifacts Management
   const {
     artifacts, selectedArtifact, isPanelOpen,
     addArtifact, updateArtifact, selectArtifact,
     togglePanel, closePanel, extractArtifactFromMessage, extractArtifactsFromMessage
   } = useArtifacts();
+
+  // DEBUG: Monitor isPanelOpen state
+  useEffect(() => {
+    console.log('[App.tsx] 🔍 isPanelOpen changed to:', isPanelOpen);
+    console.log('[App.tsx] 📦 Total artifacts:', artifacts.length);
+    console.log('[App.tsx] 🎯 Selected artifact:', selectedArtifact?.title || 'none');
+  }, [isPanelOpen, artifacts.length, selectedArtifact]);
 
   const [currentChatId, setCurrentChatId] = useState<string>('');
 
@@ -1018,17 +1034,23 @@ To enable real AI responses:
             }
           } catch { }
 
-          setMessages(prev => {
-            const last = prev[prev.length - 1];
-            if (last && last.id === aiMsgId) {
-              return [...prev.slice(0, -1), { ...last, text: fullResponseText, isStreaming: true }];
-            } else {
-              return [...prev, { id: aiMsgId, role: Role.MODEL, text: fullResponseText, timestamp: Date.now(), isStreaming: true }];
+          // ⭐ CLAUDE-STYLE: Artifact Extraction & Cleanup
+          const currentArtifacts = extractArtifactsFromMessage(fullResponseText);
+          let cleanText = fullResponseText;
+          currentArtifacts.forEach(art => {
+            if (art.raw && art.raw.length > 50) {
+              cleanText = cleanText.replace(art.raw, `\n\n> 📦 **Artifact Generated**: ${art.title}\n`);
             }
           });
 
-          // ⭐ CLAUDE-STYLE: Artifact Extraction
-          const currentArtifacts = extractArtifactsFromMessage(fullResponseText);
+          setMessages(prev => {
+            const last = prev[prev.length - 1];
+            if (last && last.id === aiMsgId) {
+              return [...prev.slice(0, -1), { ...last, text: cleanText, isStreaming: true }];
+            } else {
+              return [...prev, { id: aiMsgId, role: Role.MODEL, text: cleanText, timestamp: Date.now(), isStreaming: true }];
+            }
+          });
           currentArtifacts.forEach(foundDetails => {
             if (foundDetails && foundDetails.content && foundDetails.content.length > 20) {
               if (processedStreamArtifacts.has(foundDetails.content)) return;
@@ -1046,7 +1068,7 @@ To enable real AI responses:
                   content: foundDetails.content,
                   language: foundDetails.language || 'text'
                 });
-                if (!isPanelOpen) togglePanel();
+                // Panel auto-opens via useArtifacts hook
               }
             }
           });
@@ -1322,60 +1344,90 @@ To enable real AI responses:
   };
 
   return (
-    <Layout sidebar={
-      <Sidebar
-        activeView={activeView}
-        onViewChange={setActiveView}
-        onNewChat={handleNewChat}
-        onSelectFeature={handleFeatureSelect}
-        onLoadChat={handleLoadChat}
-      />
-    } onQuickAction={handleQuickAction} onToolToggle={handleToolToggle} onRecentFileOpen={handleRecentFileOpen} onPopularCommandSelect={handlePopularCommandSelect}>
-
-      {/* ULTIMATE WORKSPACE SPLIT LAYOUT */}
+    <Layout
+      sidebar={
+        <Sidebar
+          activeView={activeView}
+          onViewChange={setActiveView}
+          onNewChat={handleNewChat}
+          onSelectFeature={handleFeatureSelect}
+          onLoadChat={handleLoadChat}
+        />
+      }
+    >
+      {/* ===== MAIN WORKSPACE (Chat + Artifacts Side-by-Side) ===== */}
       <div className="relative flex h-full w-full overflow-hidden">
 
-        {/* MAIN AREA (Chat/Settings/Builder) */}
-        {/* Flex-1 ensures it takes remaining space. On Desktop with Panel Open, it's 70% */}
-        <div className="flex-1 flex flex-col min-w-0 h-full relative z-10">
+        {/* ===== CHAT AREA (flex-1, takes remaining space) ===== */}
+        <div className={`
+          flex-1 flex flex-col min-w-0 h-full relative z-10
+          ${isPanelOpen && !isMobile ? 'lg:w-[65%]' : 'w-full'}
+        `}>
           {renderContent()}
 
           {/* Toasts Overlay */}
           <div className="absolute top-4 right-4 z-[100] space-y-2 pointer-events-none">
             {toasts.map(t => (
-              <div key={t.id} className={`px-4 py-2 rounded-xl border text-sm shadow-lg pointer-events-auto ${t.type === 'success' ? 'bg-green-500/10 text-green-300 border-green-500/20' : t.type === 'error' ? 'bg-red-500/10 text-red-300 border-red-500/20' : 'bg-slate-800 text-slate-200 border-slate-700'}`}>{t.text}</div>
+              <div
+                key={t.id}
+                className={`
+                  px-4 py-2 rounded-xl border text-sm shadow-lg pointer-events-auto
+                  ${t.type === 'success'
+                    ? 'bg-green-500/10 text-green-300 border-green-500/20'
+                    : t.type === 'error'
+                      ? 'bg-red-500/10 text-red-300 border-red-500/20'
+                      : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] border-[var(--border-primary)]'
+                  }
+                `}
+              >
+                {t.text}
+              </div>
             ))}
           </div>
         </div>
 
-        {/* UNIFIED PANEL - WORKS ON ALL DEVICES (Fix 1) */}
-        <div className={`
-          ${isPanelOpen ? 'block' : 'hidden'}
-          fixed lg:relative
-          inset-0 lg:inset-auto
-          z-50 lg:z-auto
-          lg:w-[35%] lg:min-w-[420px]
-          bg-white
-          transition-all duration-300
-        `}>
-          <ArtifactsPanel
-            isOpen={isPanelOpen}
-            onClose={closePanel}
-            onToggle={togglePanel}
-            artifacts={artifacts}
-            selectedArtifact={selectedArtifact}
-            onSelectArtifact={selectArtifact}
-            onUpdateArtifact={updateArtifact}
-            isFixed={true} // Unified mode for mobile/desktop handling
-          />
-        </div>
-
-        {/* MOBILE BACKDROP */}
+        {/* ===== ARTIFACTS PANEL (35% on desktop, fullscreen on mobile) ===== */}
         {isPanelOpen && (
-          <div
-            className="lg:hidden fixed inset-0 bg-black/50 z-40"
-            onClick={closePanel}
-          />
+          <>
+            {/* Desktop: Side Panel (ALWAYS VISIBLE when isPanelOpen=true) */}
+            <div className={`h-full ${isMobile ? 'hidden' : 'block'}`}>
+              <ArtifactsPanel
+                isOpen={isPanelOpen}
+                onClose={closePanel}
+                onToggle={togglePanel}
+                artifacts={artifacts}
+                selectedArtifact={selectedArtifact}
+                onSelectArtifact={selectArtifact}
+                onUpdateArtifact={updateArtifact}
+                isFixed={false}
+              />
+            </div>
+
+            {/* Mobile: Fullscreen Overlay */}
+            {isMobile && (
+              <div className="fixed inset-0 z-50">
+                {/* Backdrop */}
+                <div
+                  className="absolute inset-0 bg-black/50"
+                  onClick={closePanel}
+                />
+
+                {/* Panel */}
+                <div className="relative h-full">
+                  <ArtifactsPanel
+                    isOpen={isPanelOpen}
+                    onClose={closePanel}
+                    onToggle={togglePanel}
+                    artifacts={artifacts}
+                    selectedArtifact={selectedArtifact}
+                    onSelectArtifact={selectArtifact}
+                    onUpdateArtifact={updateArtifact}
+                    isFixed={true}
+                  />
+                </div>
+              </div>
+            )}
+          </>
         )}
 
       </div>

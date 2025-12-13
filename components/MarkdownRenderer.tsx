@@ -38,28 +38,20 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onF
                     <button
                       onClick={() => copyCode(codeStr, idx)}
                       className={`code-copy-btn h-8 px-3 flex items-center gap-1.5 rounded text-xs transition-colors ${copiedIndex === idx
-                          ? 'text-[--success]'
-                          : 'text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary]'
+                        ? 'text-[--success]'
+                        : 'text-[--text-muted] hover:bg-[--bg-hover] hover:text-[--text-primary]'
                         }`}
                     >
                       {copiedIndex === idx ? <><Check size={12} /> Copied!</> : <><Copy size={12} /> Copy</>}
                     </button>
                   </div>
-                  <SyntaxHighlighter
-                    {...props}
-                    style={vscDarkPlus}
-                    language={match[1]}
-                    PreTag="div"
-                    customStyle={{
-                      margin: 0,
-                      padding: '1rem',
-                      background: 'transparent',
-                      fontSize: '14px',
-                      lineHeight: '1.5',
-                    }}
-                  >
-                    {codeStr}
-                  </SyntaxHighlighter>
+                  <div className="p-4 overflow-x-auto bg-[#1e1e1e] text-gray-200 text-sm font-mono leading-relaxed">
+                    <pre style={{ margin: 0 }}>
+                      <code className={`language-${match[1]}`}>
+                        {codeStr}
+                      </code>
+                    </pre>
+                  </div>
                 </div>
               );
             }

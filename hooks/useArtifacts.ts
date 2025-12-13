@@ -39,14 +39,13 @@ export function useArtifacts() {
         });
         setSelectedArtifact(newArtifact);
 
-        // MOBILE: Always open panel immediately
-        if (isMobile || !isPanelOpen) {
-            console.log('[Artifact] Opening panel for mobile/closed state');
-            setIsPanelOpen(true);
-        }
+        // CLAUDE AI BEHAVIOR: ALWAYS open panel on artifact creation
+        console.log('[Artifact] 🚀 BEFORE Force opening panel. Current isPanelOpen:', isPanelOpen);
+        setIsPanelOpen(true);
+        console.log('[Artifact] ✅ AFTER setIsPanelOpen(true) called');
 
         return newArtifact;
-    }, [saveToStorage, isPanelOpen]);
+    }, [saveToStorage]);
 
     const updateArtifact = useCallback((id: string, updates: Partial<Artifact>) => {
         setArtifacts(prev => {
@@ -131,7 +130,8 @@ export function useArtifacts() {
             type: r.type,
             title: r.title,
             language: r.language,
-            content: r.content
+            content: r.content,
+            raw: r.raw
         }));
     }, []);
 

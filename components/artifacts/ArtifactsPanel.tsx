@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Artifact } from '../../types/artifacts';
 import ArtifactRenderer from './ArtifactRenderer';
-import { X, Maximize2, Minimize2, Copy, Download, Code, Eye, Check } from 'lucide-react';
+import { X, Copy, Download, Code, Eye, Check } from 'lucide-react';
 
 interface ArtifactsPanelProps {
     artifacts: Artifact[];
@@ -29,7 +29,7 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const checkMobile = () => {
-                setIsMobile(window.innerWidth < 1024 || /Android|iPhone|iPad/i.test(navigator.userAgent));
+                setIsMobile(window.innerWidth < 1024);
             };
             checkMobile();
             window.addEventListener('resize', checkMobile);
@@ -69,27 +69,29 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
 
     if (!isOpen) return null;
 
-    // CLAUDE AI ARTIFACTS DESIGN (December 2025)
-    const mode = isMobile ? 'mobile' : 'desktop';
-
+    // FIXED: Desktop = side panel (relative), Mobile = fullscreen (fixed)
     return (
         <div
             className={`
-                artifacts-panel-claude claude-scrollbar
-                ${isMobile || isFixed
+        artifacts-panel-claude
+        ${isMobile
                     ? 'fixed inset-0 z-[9999]'
-                    : 'relative w-full h-full'
+                    : 'relative h-full'
                 }
-                flex flex-col
-                bg-white dark:bg-[#1A1A1A]
-            `}
-            data-artifact-panel="claude-style"
-            data-mode={mode}
+        flex flex-col
+        bg-[var(--bg-primary)] dark:bg-[#1A1A1A]
+        border-l border-[var(--border-primary)]
+      `}
+            data-mode={isMobile ? 'mobile' : 'desktop'}
+            style={{
+                // Desktop: 35% width, min 420px, max 600px
+                width: isMobile ? '100%' : 'clamp(420px, 35vw, 600px)',
+            }}
         >
-            {/* HEADER - Claude AI Style with Orange Accent */}
-            <div className="artifacts-header flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] flex-shrink-0 min-h-[56px]">
+            {/* ===== HEADER ===== */}
+            <div className="artifacts-header flex items-center justify-between px-4 py-3 border-b border-[var(--border-primary)] bg-[var(--bg-primary)] flex-shrink-0 min-h-[56px]">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                    {(isMobile || isFixed) && (
+                    {isMobile && (
                         <button
                             onClick={onClose}
                             className="claude-icon-btn flex-shrink-0"
@@ -99,11 +101,11 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
                         </button>
                     )}
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-sm font-semibold truncate text-gray-900 dark:text-gray-100">
+                        <h2 className="text-sm font-semibold truncate text-[var(--text-primary)]">
                             {selectedArtifact?.title || 'Artifacts'}
                         </h2>
                         {selectedArtifact && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            <p className="text-xs text-[var(--text-muted)] truncate">
                                 {selectedArtifact.type.toUpperCase()} • {selectedArtifact.language || 'text'}
                             </p>
                         )}
@@ -117,7 +119,11 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
                             className="claude-icon-btn relative"
                             title="Copy code"
                         >
-                            {copied ? <Check size={18} className="text-green-600" /> : <Copy size={18} />}
+                            {copied ? (
+                                <Check size={18} className="text-green-600" />
+                            ) : (
+                                <Copy size={18} />
+                            )}
                         </button>
                         <button
                             onClick={handleDownload}
@@ -130,69 +136,95 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
                 )}
             </div>
 
-            {/* TABS - Claude AI Orange Accent */}
+            {/* ===== TABS (CLAUDE ORANGE) ===== */}
             {selectedArtifact && (
-                <div className="artifacts-tabs flex border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0F0F0F] flex-shrink-0">
+                <div className="artifacts-tabs flex border-b border-[var(--border-primary)] bg-[var(--bg-secondary)] flex-shrink-0">
                     <button
                         onClick={() => setActiveTab('preview')}
-                        className={`artifacts-tab ${activeTab === 'preview' ? 'active' : ''} flex-1 px-4 py-3 font-medium text-sm transition-all flex items-center justify-center gap-2 relative`}
+                        className={`
+              artifacts-tab flex-1 px-4 py-3 font-medium text-sm 
+              transition-all flex items-center justify-center gap-2 relative
+              ${activeTab === 'preview'
+                                ? 'text-[var(--accent-primary)] bg-[var(--bg-primary)]'
+                                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                            }
+            `}
                     >
                         <Eye size={16} />
                         <span>Preview</span>
+                        {activeTab === 'preview' && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-primary)]" />
+                        )}
                     </button>
                     <button
                         onClick={() => setActiveTab('code')}
-                        className={`artifacts-tab ${activeTab === 'code' ? 'active' : ''} flex-1 px-4 py-3 font-medium text-sm transition-all flex items-center justify-center gap-2 relative`}
+                        className={`
+              artifacts-tab flex-1 px-4 py-3 font-medium text-sm 
+              transition-all flex items-center justify-center gap-2 relative
+              ${activeTab === 'code'
+                                ? 'text-[var(--accent-primary)] bg-[var(--bg-primary)]'
+                                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                            }
+            `}
                     >
                         <Code size={16} />
                         <span>Code</span>
+                        {activeTab === 'code' && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-primary)]" />
+                        )}
                     </button>
                 </div>
             )}
 
-            {/* CONTENT AREA */}
-            <div className="flex-1 overflow-hidden bg-white dark:bg-[#1A1A1A] relative claude-scrollbar">
+            {/* ===== CONTENT AREA ===== */}
+            <div className="flex-1 overflow-hidden bg-[var(--bg-primary)] relative">
                 {!selectedArtifact ? (
-                    // EMPTY STATE - Claude AI Style 
+                    // EMPTY STATE
                     <div className="empty-state flex flex-col items-center justify-center h-full p-8">
-                        <div className="empty-state-icon flex items-center justify-center mb-4">
-                            <Code size={32} className="text-gray-400 dark:text-gray-600" />
+                        <div className="empty-state-icon flex items-center justify-center mb-4 w-16 h-16 bg-[var(--bg-tertiary)] rounded-full">
+                            <Code size={32} className="text-[var(--text-muted)]" />
                         </div>
-                        <p className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">No artifact selected</p>
-                        <p className="text-sm text-center text-gray-500 dark:text-gray-500 max-w-xs">
+                        <p className="text-lg font-medium text-[var(--text-secondary)] mb-2">
+                            No artifact selected
+                        </p>
+                        <p className="text-sm text-center text-[var(--text-muted)] max-w-xs">
                             Ask me to create code, React components, or visualizations and they'll appear here.
                         </p>
                     </div>
                 ) : activeTab === 'preview' ? (
                     // PREVIEW TAB
-                    <div className="w-full h-full overflow-auto bg-gray-50 dark:bg-[#0F0F0F] claude-scrollbar">
+                    <div className="w-full h-full overflow-auto bg-[var(--bg-secondary)]">
                         <ArtifactRenderer
                             artifact={selectedArtifact}
                             isMobile={isMobile}
                         />
                     </div>
                 ) : (
-                    // CODE TAB - Claude Style Syntax Highlighting
-                    <div className="code-view w-full h-full overflow-auto claude-scrollbar">
-                        <pre className="p-4 text-sm font-mono whitespace-pre-wrap break-words m-0 leading-relaxed">
+                    // CODE TAB
+                    <div className="code-view w-full h-full overflow-auto bg-[#1E293B]">
+                        <pre className="p-4 text-sm font-mono whitespace-pre-wrap break-words m-0 leading-relaxed text-[#E2E8F0]">
                             <code>{selectedArtifact.content}</code>
                         </pre>
                     </div>
                 )}
             </div>
 
-            {/* ARTIFACT NAVIGATION - Bottom Tabs (if multiple) */}
+            {/* ===== ARTIFACT NAVIGATION (Bottom Tabs) ===== */}
             {artifacts.length > 1 && (
-                <div className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0F0F0F] p-3 overflow-x-auto flex-shrink-0">
+                <div className="border-t border-[var(--border-primary)] bg-[var(--bg-secondary)] p-3 overflow-x-auto flex-shrink-0">
                     <div className="flex gap-2">
                         {artifacts.map((artifact) => (
                             <button
                                 key={artifact.id}
                                 onClick={() => onSelectArtifact(artifact)}
-                                className={`artifact-card px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all border flex-shrink-0 ${selectedArtifact?.id === artifact.id
-                                    ? 'bg-[#EA580C] text-white border-[#EA580C] claude-shadow-sm'
-                                    : 'bg-white dark:bg-[#1A1A1A] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-[#EA580C] dark:hover:border-[#EA580C]'
-                                    }`}
+                                className={`
+                  artifact-card px-3 py-2 rounded-lg text-xs font-medium 
+                  whitespace-nowrap transition-all border flex-shrink-0
+                  ${selectedArtifact?.id === artifact.id
+                                        ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)]'
+                                        : 'bg-[var(--bg-primary)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-[var(--accent-primary)]'
+                                    }
+                `}
                             >
                                 {artifact.title}
                             </button>

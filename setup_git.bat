@@ -13,7 +13,7 @@ git branch -M main
 echo.
 echo Adding remote origin...
 git remote remove origin
-git remote add origin https://github.com/wiliam95/bismillah.git
+git remote add origin https://github.com/wiliam95/profesor-wili
 echo.
 echo ===================================================
 echo SETUP COMPLETE!

@@ -1,62 +1,54 @@
-/* ============================================================================
-   WILI - RESPONSIVE CSS FIXES
-   Add this to src/index.css or create new file: src/styles/responsive.css
-   ============================================================================ */
+/* Claude AI Style - December 2025 */
 
-/* =========================
-   1. SCROLLBAR STYLING
-   ========================= */
-.scrollbar-thin::-webkit-scrollbar {
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.5);
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
   border-radius: 3px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.7);
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.6);
 }
 
-/* Firefox scrollbar */
-.scrollbar-thin {
+* {
   scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
 }
 
-/* =========================
-   2. SMOOTH ANIMATIONS
-   ========================= */
-@keyframes slideInFromTop {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -67,29 +59,27 @@
   }
 }
 
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-in {
   animation: fadeIn 0.2s ease-out;
 }
 
 .slide-in-from-top-2 {
-  animation: slideInFromTop 0.2s ease-out;
+  animation: slideUp 0.2s ease-out;
 }
 
-.slide-in-from-right {
-  animation: slideInFromRight 0.3s ease-out;
-}
-
-/* =========================
-   3. TOUCH-FRIENDLY
-   ========================= */
-.touch-manipulation {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* Increase touch target size on mobile */
+/* Touch Optimization */
 @media (max-width: 768px) {
 
   button,
@@ -98,33 +88,7 @@
     min-height: 44px;
     min-width: 44px;
   }
-}
 
-/* =========================
-   4. MOBILE OPTIMIZATIONS
-   ========================= */
-@media (max-width: 768px) {
-
-  /* Prevent text size adjustment on orientation change */
-  html {
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-  }
-
-  /* Better font rendering on mobile */
-  body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Optimize scrolling */
-  .overflow-y-auto,
-  .overflow-x-auto {
-    -webkit-overflow-scrolling: touch;
-    overflow-scrolling: touch;
-  }
-
-  /* Prevent zoom on input focus */
   input,
   textarea,
   select {
@@ -132,294 +96,35 @@
   }
 }
 
-/* =========================
-   5. ARTIFACTS PANEL
-   ========================= */
-.artifacts-panel-claude {
-  position: relative;
-  isolation: isolate;
-}
-
-/* Mobile: Fullscreen with slide animation */
-@media (max-width: 1024px) {
-  .artifacts-panel-claude[data-artifact-panel="claude-style"] {
-    animation: slideInFromRight 0.3s ease-out;
-  }
-}
-
-/* Desktop: Side panel with fade */
-@media (min-width: 1024px) {
-  .artifacts-panel-claude[data-artifact-panel="claude-style"] {
-    animation: fadeIn 0.2s ease-out;
-  }
-}
-
-/* Iframe optimization */
-.artifacts-panel-claude iframe {
-  border: none;
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: white;
-}
-
-/* =========================
-   6. SIDEBAR MOBILE DRAWER
-   ========================= */
-@media (max-width: 768px) {
-
-  /* Smooth drawer animation */
-  .sidebar {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-  }
-
-  /* Prevent body scroll when drawer open */
-  body.drawer-open {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-  }
-}
-
-/* =========================
-   7. DASHBOARD FITUR SECTION
-   ========================= */
-.dashboard-section {
-  /* Better scrolling on iOS */
-  -webkit-overflow-scrolling: touch;
-}
-
-.dashboard-section .feature-category button {
-  /* Prevent text selection on mobile */
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* Smooth expand/collapse */
-.dashboard-section .feature-category>div {
-  overflow: hidden;
-  transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
-}
-
-/* =========================
-   8. LOADING STATES
-   ========================= */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* =========================
-   9. RESPONSIVE TYPOGRAPHY
-   ========================= */
-@media (max-width: 640px) {
-  h1 {
-    font-size: 1.5rem;
-  }
-
-  h2 {
-    font-size: 1.25rem;
-  }
-
-  h3 {
-    font-size: 1.125rem;
-  }
-}
-
-/* =========================
-   10. FOCUS STATES (A11Y)
-   ========================= */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid #10B981;
+/* Focus States */
+*:focus-visible {
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
 
-/* Remove focus on mouse click, keep for keyboard */
-button:focus:not(:focus-visible),
-a:focus:not(:focus-visible) {
+button:focus:not(:focus-visible) {
   outline: none;
 }
 
-/* =========================
-   11. SAFE AREAS (iOS)
-   ========================= */
-@supports (padding: env(safe-area-inset-bottom)) {
-
-  .sidebar-footer,
-  .chat-input-area {
-    padding-bottom: calc(12px + env(safe-area-inset-bottom));
-  }
+/* Transitions */
+.transition-all {
+  transition: all 0.15s ease;
 }
 
-/* =========================
-   12. DARK MODE SUPPORT
-   ========================= */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #1A1A1A;
-    --bg-secondary: #2D2D2D;
-    --bg-tertiary: #3D3D3D;
-    --bg-hover: #404040;
-    --text-primary: #FFFFFF;
-    --text-secondary: #E0E0E0;
-    --text-muted: #A0A0A0;
-    --border-primary: #404040;
-    --border-subtle: #333333;
-    --accent-primary: #10B981;
-    --accent-hover: #059669;
-  }
+/* Utilities */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* =========================
-   13. PRINT STYLES
-   ========================= */
-@media print {
-
-  .sidebar,
-  .artifacts-panel,
-  button,
-  .no-print {
-    display: none !important;
-  }
-
-  .chat-message {
-    page-break-inside: avoid;
-  }
-}
-
-/* =========================
-   14. REDUCED MOTION
-   ========================= */
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
 
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* =========================
-   15. HIGH CONTRAST MODE
-   ========================= */
-@media (prefers-contrast: high) {
-
-  button,
-  input,
-  select,
-  textarea {
-    border: 2px solid currentColor;
-  }
-}
-
-/* =========================
-   16. CUSTOM UTILITIES
-   ========================= */
-.truncate-2-lines {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.truncate-3-lines {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.backdrop-blur-sm {
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-
-.backdrop-blur-md {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-/* =========================
-   17. TRANSITION UTILITIES
-   ========================= */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-.transition-colors {
-  transition-property: color, background-color, border-color;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-.transition-transform {
-  transition-property: transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-/* =========================
-   18. SKELETON LOADING
-   ========================= */
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-.skeleton {
-  background: linear-gradient(90deg,
-      #f0f0f0 25%,
-      #e0e0e0 50%,
-      #f0f0f0 75%);
-  background-size: 1000px 100%;
-  animation: shimmer 2s infinite;
-}
-
-/* =========================
-   19. MOBILE BOTTOM BAR
-   ========================= */
-@media (max-width: 768px) {
-  .mobile-bottom-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 50;
-  }
-}
-
-/* =========================
-   20. PERFORMANCE HINTS
-   ========================= */
-.gpu-accelerated {
-  transform: translateZ(0);
-  will-change: transform;
-  backface-visibility: hidden;
-  perspective: 1000px;
-}
-
-/* Optimize animations for 60fps */
-@media (prefers-reduced-motion: no-preference) {
-  .smooth-scroll {
-    scroll-behavior: smooth;
   }
 }
