@@ -104,8 +104,6 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: white; }
@@ -116,11 +114,17 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     <div id="root"></div>
     <script>
         window.onerror = function(msg, url, line, col, error) {
+            // Ignore ResizeObserver loop limit exceeded
+            if (msg.includes('ResizeObserver')) return false;
             document.getElementById('root').innerHTML = '<div class="error-display"><h3>⚠️ Runtime Error</h3><pre>' + msg + '\\nAt line: ' + line + ':' + col + '</pre></div>';
             return false;
         };
     </script>
-    <script type="text/babel" data-type="module" data-presets="react,typescript">
+    <!-- React & ReactDOM injected globally for Babel -->
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <script type="text/babel" data-presets="react,typescript">
         const { useState, useEffect, useRef, useMemo, useCallback } = React;
         try {
             ${code}
