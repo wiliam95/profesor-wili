@@ -114,6 +114,12 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
 </head>
 <body>
     <div id="root"></div>
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            document.getElementById('root').innerHTML = '<div class="error-display"><h3>⚠️ Runtime Error</h3><pre>' + msg + '\\nAt line: ' + line + ':' + col + '</pre></div>';
+            return false;
+        };
+    </script>
     <script type="text/babel" data-type="module" data-presets="react,typescript">
         const { useState, useEffect, useRef, useMemo, useCallback } = React;
         try {
