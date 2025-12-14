@@ -1062,13 +1062,17 @@ To enable real AI responses:
               if (!existsInHistory) {
                 console.log('[App] 🎨 Auto-detected artifact:', foundDetails.title);
                 processedStreamArtifacts.add(foundDetails.content);
-                addArtifact({
+                const newArt = addArtifact({
                   type: foundDetails.type || 'code',
                   title: foundDetails.title || 'Code Snippet',
                   content: foundDetails.content,
                   language: foundDetails.language || 'text'
                 });
-                // Panel auto-opens via useArtifacts hook
+
+                // FORCE OPEN PANEL (Redundant safety check)
+                if (!isPanelOpen) setIsPanelOpen(true);
+                // Also select it explicitly
+                setSelectedArtifact(newArt);
               }
             }
           });
