@@ -6,9 +6,14 @@ import { streamOpenAIChat } from "./openaiService";
 import { getCitationsFromQuery } from "./webSearch";
 
 const getApiKey = (): string | null => {
-  const local = typeof window !== 'undefined' ? window.localStorage.getItem('wili.googleKey') : null;
-  const envk = (import.meta as any)?.env?.VITE_GEMINI_API_KEY;
-  const key = local || envk;
+  if (typeof window === 'undefined') return (import.meta as any)?.env?.VITE_GEMINI_API_KEY || null;
+
+  // Check multiple possible keys for robustness
+  const key =
+    window.localStorage.getItem('wili.googleKey') ||
+    window.localStorage.getItem('GEMINI_API_KEY') ||
+    (import.meta as any)?.env?.VITE_GEMINI_API_KEY;
+
   return key || null;
 };
 
