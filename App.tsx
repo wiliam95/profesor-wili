@@ -1037,9 +1037,19 @@ To enable real AI responses:
           // ⭐ CLAUDE-STYLE: Artifact Extraction & Cleanup
           const currentArtifacts = extractArtifactsFromMessage(fullResponseText);
           let cleanText = fullResponseText;
+
+          // Clean up artifact code blocks from chat
           currentArtifacts.forEach(art => {
             if (art.raw && art.raw.length > 50) {
-              cleanText = cleanText.replace(art.raw, `\n\n> 📦 **Artifact Generated**: ${art.title}\n`);
+              // Try exact match first
+              if (cleanText.includes(art.raw)) {
+                cleanText = cleanText.replace(art.raw, `\n\n> 📦 **Artifact Generated**: ${art.title}\n`);
+              } else {
+                // Fallback: Use regex to find and replace code block by content signature
+                const escapedContent = art.content.substring(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const codeBlockRegex = new RegExp('```[a-z]*\\s*' + escapedContent + '[\\s\\S]*?```', 'g');
+                cleanText = cleanText.replace(codeBlockRegex, `\n\n> 📦 **Artifact Generated**: ${art.title}\n`);
+              }
             }
           });
 
@@ -1069,10 +1079,7 @@ To enable real AI responses:
                   language: foundDetails.language || 'text'
                 });
 
-                // FORCE OPEN PANEL (Redundant safety check)
-                if (!isPanelOpen) setIsPanelOpen(true);
-                // Also select it explicitly
-                setSelectedArtifact(newArt);
+
               }
             }
           });
